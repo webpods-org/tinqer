@@ -22,16 +22,16 @@ describe("PostgreSQL Integration - Composite GROUP BY", () => {
         from(dbContext, "orders")
           .groupBy((o) => ({
             userId: o.user_id,
-            status: o.status
+            status: o.status,
           }))
           .select((g) => ({
             customerId: g.key.userId,
             orderStatus: g.key.status,
             orderCount: g.count(),
-            totalAmount: g.sum((o) => o.total_amount)
+            totalAmount: g.sum((o) => o.total_amount),
           }))
           .orderBy((r) => r.customerId)
-          .thenBy((r) => r.orderStatus)
+          .thenBy((r) => r.orderStatus),
       );
 
       expect(results).to.be.an("array");
@@ -48,14 +48,14 @@ describe("PostgreSQL Integration - Composite GROUP BY", () => {
         from(dbContext, "users")
           .groupBy((u) => ({
             deptId: u.department_id,
-            isActive: u.is_active
+            isActive: u.is_active,
           }))
           .select((g) => ({
             department: g.key.deptId,
             active: g.key.isActive,
             count: g.count(),
-            avgAge: g.average((u) => u.age ?? 0)
-          }))
+            avgAge: g.average((u) => u.age ?? 0),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -70,16 +70,16 @@ describe("PostgreSQL Integration - Composite GROUP BY", () => {
         from(dbContext, "products")
           .groupBy((p) => ({
             category: p.category_id,
-            featured: p.is_featured
+            featured: p.is_featured,
           }))
           .select((g) => ({
             categoryId: g.key.category,
             isFeatured: g.key.featured,
             productCount: g.count(),
             avgPrice: g.average((p) => p.price),
-            totalStock: g.sum((p) => p.stock)
+            totalStock: g.sum((p) => p.stock),
           }))
-          .orderBy((r) => r.categoryId ?? 999999)
+          .orderBy((r) => r.categoryId ?? 999999),
       );
 
       expect(results).to.be.an("array");
@@ -97,15 +97,15 @@ describe("PostgreSQL Integration - Composite GROUP BY", () => {
           .groupBy((u) => ({
             countryId: u.country_id,
             deptId: u.department_id,
-            active: u.is_active
+            active: u.is_active,
           }))
           .select((g) => ({
             country: g.key.countryId,
             department: g.key.deptId,
             isActive: g.key.active,
-            userCount: g.count()
+            userCount: g.count(),
           }))
-          .take(20)
+          .take(20),
       );
 
       expect(results).to.be.an("array");
@@ -121,17 +121,17 @@ describe("PostgreSQL Integration - Composite GROUP BY", () => {
         from(dbContext, "orders")
           .where((o) => o.order_date >= new Date("2024-01-01"))
           .groupBy((o) => ({
-            year: 2024,  // Simplified - would need EXTRACT(YEAR FROM order_date)
-            month: 1,    // Simplified - would need EXTRACT(MONTH FROM order_date)
-            status: o.status
+            year: 2024, // Simplified - would need EXTRACT(YEAR FROM order_date)
+            month: 1, // Simplified - would need EXTRACT(MONTH FROM order_date)
+            status: o.status,
           }))
           .select((g) => ({
             year: g.key.year,
             month: g.key.month,
             status: g.key.status,
             orderCount: g.count(),
-            revenue: g.sum((o) => o.total_amount)
-          }))
+            revenue: g.sum((o) => o.total_amount),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -148,14 +148,14 @@ describe("PostgreSQL Integration - Composite GROUP BY", () => {
         from(dbContext, "products")
           .groupBy((p) => ({
             priceRange: p.price < 100 ? "Low" : p.price < 500 ? "Medium" : "High",
-            hasStock: p.stock > 0
+            hasStock: p.stock > 0,
           }))
           .select((g) => ({
             range: g.key.priceRange,
             inStock: g.key.hasStock,
             count: g.count(),
-            avgPrice: g.average((p) => p.price)
-          }))
+            avgPrice: g.average((p) => p.price),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -172,15 +172,14 @@ describe("PostgreSQL Integration - Composite GROUP BY", () => {
           .where((e) => e.salary !== null)
           .groupBy((e) => ({
             department: e.department_id,
-            salaryLevel: e.salary! < 50000 ? "Junior" :
-                        e.salary! < 80000 ? "Mid" : "Senior"
+            salaryLevel: e.salary! < 50000 ? "Junior" : e.salary! < 80000 ? "Mid" : "Senior",
           }))
           .select((g) => ({
             dept: g.key.department,
             level: g.key.salaryLevel,
             count: g.count(),
-            avgSalary: g.average((e) => e.salary!)
-          }))
+            avgSalary: g.average((e) => e.salary!),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -198,14 +197,14 @@ describe("PostgreSQL Integration - Composite GROUP BY", () => {
           .where((o) => o.total_amount > 500)
           .groupBy((o) => ({
             customerId: o.user_id,
-            year: 2024  // Simplified
+            year: 2024, // Simplified
           }))
           .select((g) => ({
             customer: g.key.customerId,
             year: g.key.year,
             highValueOrders: g.count(),
-            totalRevenue: g.sum((o) => o.total_amount)
-          }))
+            totalRevenue: g.sum((o) => o.total_amount),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -220,14 +219,14 @@ describe("PostgreSQL Integration - Composite GROUP BY", () => {
           .where((p) => p.stock > 0 && p.is_featured === true)
           .groupBy((p) => ({
             category: p.category_id,
-            priceRange: p.price >= 1000 ? "Premium" : "Standard"
+            priceRange: p.price >= 1000 ? "Premium" : "Standard",
           }))
           .select((g) => ({
             categoryId: g.key.category,
             range: g.key.priceRange,
             featuredCount: g.count(),
-            totalValue: g.sum((p) => p.price * p.stock)
-          }))
+            totalValue: g.sum((p) => p.price * p.stock),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -244,15 +243,15 @@ describe("PostgreSQL Integration - Composite GROUP BY", () => {
         from(dbContext, "users")
           .groupBy((u) => ({
             country: u.country_id,
-            dept: u.department_id
+            dept: u.department_id,
           }))
           .select((g) => ({
             countryId: g.key.country,
             deptId: g.key.dept,
-            count: g.count()
+            count: g.count(),
           }))
           .orderBy((r) => r.countryId ?? 999999)
-          .thenBy((r) => r.deptId ?? 999999)
+          .thenBy((r) => r.deptId ?? 999999),
       );
 
       expect(results).to.be.an("array");
@@ -275,16 +274,16 @@ describe("PostgreSQL Integration - Composite GROUP BY", () => {
         from(dbContext, "orders")
           .groupBy((o) => ({
             userId: o.user_id,
-            status: o.status
+            status: o.status,
           }))
           .select((g) => ({
             customer: g.key.userId,
             status: g.key.status,
             count: g.count(),
-            total: g.sum((o) => o.total_amount)
+            total: g.sum((o) => o.total_amount),
           }))
           .orderByDescending((r) => r.total)
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -302,7 +301,7 @@ describe("PostgreSQL Integration - Composite GROUP BY", () => {
         from(dbContext, "order_items")
           .groupBy((oi) => ({
             orderId: oi.order_id,
-            productId: oi.product_id
+            productId: oi.product_id,
           }))
           .select((g) => ({
             order: g.key.orderId,
@@ -312,9 +311,9 @@ describe("PostgreSQL Integration - Composite GROUP BY", () => {
             avgPrice: g.average((oi) => oi.unit_price),
             minPrice: g.min((oi) => oi.unit_price),
             maxPrice: g.max((oi) => oi.unit_price),
-            revenue: g.sum((oi) => oi.quantity * oi.unit_price)
+            revenue: g.sum((oi) => oi.quantity * oi.unit_price),
           }))
-          .take(20)
+          .take(20),
       );
 
       expect(results).to.be.an("array");
@@ -328,24 +327,25 @@ describe("PostgreSQL Integration - Composite GROUP BY", () => {
     it("should handle composite GROUP BY with parameters", async () => {
       const params = {
         minAmount: 100,
-        targetStatus: "completed"
+        targetStatus: "completed",
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "orders")
-          .where((o) => o.total_amount >= p.minAmount)
-          .groupBy((o) => ({
-            customerId: o.user_id,
-            isTarget: o.status === p.targetStatus
-          }))
-          .select((g) => ({
-            customer: g.key.customerId,
-            isTargetStatus: g.key.isTarget,
-            orders: g.count(),
-            revenue: g.sum((o) => o.total_amount)
-          })),
-        params
+        (p) =>
+          from(dbContext, "orders")
+            .where((o) => o.total_amount >= p.minAmount)
+            .groupBy((o) => ({
+              customerId: o.user_id,
+              isTarget: o.status === p.targetStatus,
+            }))
+            .select((g) => ({
+              customer: g.key.customerId,
+              isTargetStatus: g.key.isTarget,
+              orders: g.count(),
+              revenue: g.sum((o) => o.total_amount),
+            })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -363,23 +363,21 @@ describe("PostgreSQL Integration - Composite GROUP BY", () => {
           .groupBy((u) => ({
             dept: u.department_id,
             country: u.country_id,
-            salary: u.salary !== null
+            salary: u.salary !== null,
           }))
           .select((g) => ({
             department: g.key.dept,
             country: g.key.country,
             hasSalary: g.key.salary,
-            count: g.count()
-          }))
+            count: g.count(),
+          })),
       );
 
       expect(results).to.be.an("array");
       // Should include groups with NULL department and/or country
-      const nullGroups = results.filter(g =>
-        g.department === null || g.country === null
-      );
+      const nullGroups = results.filter((g) => g.department === null || g.country === null);
       if (nullGroups.length > 0) {
-        nullGroups.forEach(g => {
+        nullGroups.forEach((g) => {
           expect(g.count).to.be.greaterThan(0);
         });
       }

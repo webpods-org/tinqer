@@ -23,7 +23,7 @@ describe("PostgreSQL Integration - Advanced ORDER BY", () => {
           .orderBy((p) => p.category_id)
           .thenByDescending((p) => p.price)
           .thenBy((p) => p.name)
-          .take(20)
+          .take(20),
       );
 
       expect(results).to.be.an("array");
@@ -50,7 +50,7 @@ describe("PostgreSQL Integration - Advanced ORDER BY", () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "users")
           .orderBy((u) => u.salary ?? 0) // NULL handling with coalesce
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -73,7 +73,7 @@ describe("PostgreSQL Integration - Advanced ORDER BY", () => {
         from(dbContext, "products")
           .where((p) => p.stock > 0)
           .orderBy((p) => p.price * p.stock) // Order by total inventory value
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -95,10 +95,10 @@ describe("PostgreSQL Integration - Advanced ORDER BY", () => {
           .select((g) => ({
             customerId: g.key.userId,
             orderCount: g.count(),
-            totalSpent: g.sum((o) => o.total_amount)
+            totalSpent: g.sum((o) => o.total_amount),
           }))
           .orderByDescending((r) => r.totalSpent)
-          .take(5)
+          .take(5),
       );
 
       expect(results).to.be.an("array");
@@ -115,13 +115,13 @@ describe("PostgreSQL Integration - Advanced ORDER BY", () => {
         from(dbContext, "products")
           .select((p) => ({ categoryId: p.category_id }))
           .distinct()
-          .orderBy((r) => r.categoryId)
+          .orderBy((r) => r.categoryId),
       );
 
       expect(results).to.be.an("array");
 
       // Check uniqueness
-      const categoryIds = results.map(r => r.categoryId);
+      const categoryIds = results.map((r) => r.categoryId);
       const uniqueIds = [...new Set(categoryIds)];
       expect(categoryIds.length).to.equal(uniqueIds.length);
 
@@ -144,12 +144,12 @@ describe("PostgreSQL Integration - Advanced ORDER BY", () => {
               orderNumber: o.order_number,
               customerName: u.name,
               orderDate: o.order_date,
-              total: o.total_amount
-            })
+              total: o.total_amount,
+            }),
           )
           .orderByDescending((r) => r.orderDate)
           .thenBy((r) => r.customerName)
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -172,7 +172,7 @@ describe("PostgreSQL Integration - Advanced ORDER BY", () => {
           .thenBy((u) => u.department_id ?? 999)
           .thenByDescending((u) => u.salary ?? 0)
           .thenBy((u) => u.name)
-          .take(20)
+          .take(20),
       );
 
       expect(results).to.be.an("array");
@@ -184,7 +184,7 @@ describe("PostgreSQL Integration - Advanced ORDER BY", () => {
         from(dbContext, "products")
           .orderByDescending((p) => p.is_featured) // true first, then false
           .thenByDescending((p) => p.rating ?? 0)
-          .take(15)
+          .take(15),
       );
 
       expect(results).to.be.an("array");
@@ -204,16 +204,17 @@ describe("PostgreSQL Integration - Advanced ORDER BY", () => {
     it("should order with parameters", async () => {
       const params = {
         minPrice: 100,
-        maxPrice: 1000
+        maxPrice: 1000,
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => pr.price >= p.minPrice && pr.price <= p.maxPrice)
-          .orderBy((pr) => pr.price)
-          .take(10),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.price >= p.minPrice && pr.price <= p.maxPrice)
+            .orderBy((pr) => pr.price)
+            .take(10),
+        params,
       );
 
       expect(results).to.be.an("array");

@@ -23,9 +23,9 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
         from(dbContext, "users")
           .select((u) => ({
             id: u.id,
-            phone: u.phone ?? "No phone"
+            phone: u.phone ?? "No phone",
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -42,9 +42,9 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
         from(dbContext, "products")
           .select((p) => ({
             id: p.id,
-            cost: p.cost ?? 0
+            cost: p.cost ?? 0,
           }))
-          .take(20)
+          .take(20),
       );
 
       expect(results).to.be.an("array");
@@ -59,9 +59,9 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
         from(dbContext, "products")
           .select((p) => ({
             id: p.id,
-            featured: p.is_featured ?? false
+            featured: p.is_featured ?? false,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -72,14 +72,14 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
 
     it("should coalesce NULL dates", async () => {
       const defaultDate = new Date("2024-01-01");
-      
+
       const results = await executeSimple(db, () =>
         from(dbContext, "orders")
           .select((o) => ({
             id: o.id,
-            shipDate: o.ship_date ?? defaultDate
+            shipDate: o.ship_date ?? defaultDate,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -98,9 +98,9 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
           .select((p) => ({
             id: p.id,
             cost: p.cost,
-            coalescedCost: p.cost ?? 0
+            coalescedCost: p.cost ?? 0,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -116,9 +116,9 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
           .select((u) => ({
             id: u.id,
             age: u.age,
-            effectiveAge: u.age ?? 0
+            effectiveAge: u.age ?? 0,
           }))
-          .take(20)
+          .take(20),
       );
 
       expect(results).to.be.an("array");
@@ -130,16 +130,13 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
     it("should handle multiple coalescing in WHERE", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "employees")
-          .where((e) =>
-            (e.salary ?? 0) > 50000 &&
-            (e.commission_pct ?? 0) > 0.1
-          )
+          .where((e) => (e.salary ?? 0) > 50000 && (e.commission_pct ?? 0) > 0.1)
           .select((e) => ({
             id: e.id,
             salary: e.salary,
-            commission: e.commission_pct
+            commission: e.commission_pct,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -156,19 +153,20 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
     it("should coalesce to parameter value", async () => {
       const params = {
         defaultPhone: "+1-000-000-0000",
-        defaultAge: 21
+        defaultAge: 21,
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "users")
-          .select((u) => ({
-            id: u.id,
-            phone: u.phone ?? p.defaultPhone,
-            age: u.age ?? p.defaultAge
-          }))
-          .take(10),
-        params
+        (p) =>
+          from(dbContext, "users")
+            .select((u) => ({
+              id: u.id,
+              phone: u.phone ?? p.defaultPhone,
+              age: u.age ?? p.defaultAge,
+            }))
+            .take(10),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -187,20 +185,21 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
     it("should use parameter in coalesced WHERE", async () => {
       const params = {
         defaultStock: 10,
-        minStock: 5
+        minStock: 5,
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => (pr.stock ?? p.defaultStock) >= p.minStock)
-          .select((pr) => ({
-            id: pr.id,
-            stock: pr.stock,
-            effectiveStock: pr.stock ?? p.defaultStock
-          }))
-          .take(20),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => (pr.stock ?? p.defaultStock) >= p.minStock)
+            .select((pr) => ({
+              id: pr.id,
+              stock: pr.stock,
+              effectiveStock: pr.stock ?? p.defaultStock,
+            }))
+            .take(20),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -219,9 +218,9 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
             price: p.price,
             cost: p.cost,
             profit: p.price - (p.cost ?? 0),
-            margin: ((p.price - (p.cost ?? 0)) / p.price) * 100
+            margin: ((p.price - (p.cost ?? 0)) / p.price) * 100,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -241,9 +240,9 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
             name: u.name,
             phone: u.phone ?? "Unknown",
             // Note: String concatenation might not work directly
-            displayPhone: u.phone ?? "No phone provided"
+            displayPhone: u.phone ?? "No phone provided",
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -262,9 +261,9 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
           .select((g) => ({
             deptId: g.key,
             totalSalary: g.sum((e) => e.salary ?? 0),
-            totalCommission: g.sum((e) => (e.commission_pct ?? 0) * 10000)
+            totalCommission: g.sum((e) => (e.commission_pct ?? 0) * 10000),
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -282,9 +281,9 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
           .groupBy((p) => p.category_id)
           .select((g) => ({
             categoryId: g.key,
-            avgCost: g.average((p) => p.cost ?? 0)
+            avgCost: g.average((p) => p.cost ?? 0),
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -301,8 +300,8 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
           .select((g) => ({
             deptId: g.key,
             totalUsers: g.count(),
-            usersWithPhone: g.count()
-          }))
+            usersWithPhone: g.count(),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -320,9 +319,9 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
           .select((p) => ({
             id: p.id,
             cost: p.cost,
-            effectiveCost: p.cost ?? 999999
+            effectiveCost: p.cost ?? 999999,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -341,9 +340,9 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
           .select((u) => ({
             id: u.id,
             age: u.age,
-            effectiveAge: u.age ?? 0
+            effectiveAge: u.age ?? 0,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -363,9 +362,9 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
           .select((u) => ({
             id: u.id,
             // Simulate chained coalescing: phone ?? address ?? "No contact"
-            contact: u.phone ?? (u.address ?? "No contact")
+            contact: u.phone ?? u.address ?? "No contact",
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -380,10 +379,10 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
         from(dbContext, "employees")
           .select((e) => ({
             id: e.id,
-            totalComp: (e.salary ?? 0) + ((e.commission_pct ?? 0) * 100000),
-            adjustedSalary: (e.salary ?? 50000) * 1.1
+            totalComp: (e.salary ?? 0) + (e.commission_pct ?? 0) * 100000,
+            adjustedSalary: (e.salary ?? 50000) * 1.1,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -402,9 +401,9 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
         from(dbContext, "products")
           .select((p) => ({
             id: p.id,
-            description: p.description ?? "No description"
+            description: p.description ?? "No description",
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -422,8 +421,8 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
             id: p.id,
             stock: p.stock,
             // Zero is not NULL, should not be coalesced
-            stockDisplay: p.stock ?? -1
-          }))
+            stockDisplay: p.stock ?? -1,
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -441,9 +440,9 @@ describe("PostgreSQL Integration - NULL Coalescing", () => {
             id: u.id,
             isActive: u.is_active,
             // False is not NULL, should not be coalesced
-            activeDisplay: u.is_active ?? true
+            activeDisplay: u.is_active ?? true,
           }))
-          .take(5)
+          .take(5),
       );
 
       expect(results).to.be.an("array");

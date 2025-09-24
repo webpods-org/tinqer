@@ -20,11 +20,10 @@ describe("PostgreSQL Integration - Date/Time Operations", () => {
     it("should filter orders by date range", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "orders")
-          .where((o) =>
-            o.order_date >= new Date("2024-01-01") &&
-            o.order_date < new Date("2024-07-01")
+          .where(
+            (o) => o.order_date >= new Date("2024-01-01") && o.order_date < new Date("2024-07-01"),
           )
-          .orderBy((o) => o.order_date)
+          .orderBy((o) => o.order_date),
       );
 
       expect(results).to.be.an("array");
@@ -41,22 +40,20 @@ describe("PostgreSQL Integration - Date/Time Operations", () => {
 
       const params = {
         startDate: thirtyDaysAgo,
-        endDate: new Date()
+        endDate: new Date(),
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "orders")
-          .where((o) =>
-            o.order_date >= p.startDate &&
-            o.order_date <= p.endDate
-          )
-          .select((o) => ({
-            orderNumber: o.order_number,
-            orderDate: o.order_date,
-            status: o.status
-          })),
-        params
+        (p) =>
+          from(dbContext, "orders")
+            .where((o) => o.order_date >= p.startDate && o.order_date <= p.endDate)
+            .select((o) => ({
+              orderNumber: o.order_number,
+              orderDate: o.order_date,
+              status: o.status,
+            })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -70,26 +67,24 @@ describe("PostgreSQL Integration - Date/Time Operations", () => {
     it("should compare dates with NULL handling", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "orders")
-          .where((o) =>
-            o.ship_date !== null &&
-            o.ship_date > o.order_date
-          )
+          .where((o) => o.ship_date !== null && o.ship_date > o.order_date)
           .select((o) => ({
             orderNumber: o.order_number,
             orderDate: o.order_date,
             shipDate: o.ship_date,
-            daysToShip: o.ship_date !== null ?
-              (o.ship_date.getTime() - o.order_date.getTime()) / (1000 * 60 * 60 * 24) :
-              null
+            daysToShip:
+              o.ship_date !== null
+                ? (o.ship_date.getTime() - o.order_date.getTime()) / (1000 * 60 * 60 * 24)
+                : null,
           }))
-          .take(20)
+          .take(20),
       );
 
       expect(results).to.be.an("array");
       results.forEach((order) => {
         if (order.shipDate !== null) {
           expect(new Date(order.shipDate).getTime()).to.be.greaterThan(
-            new Date(order.orderDate).getTime()
+            new Date(order.orderDate).getTime(),
           );
         }
       });
@@ -102,7 +97,7 @@ describe("PostgreSQL Integration - Date/Time Operations", () => {
         from(dbContext, "orders")
           .orderBy((o) => o.order_date)
           .thenByDescending((o) => o.ship_date ?? new Date("1900-01-01"))
-          .take(20)
+          .take(20),
       );
 
       expect(results).to.be.an("array");
@@ -123,15 +118,15 @@ describe("PostgreSQL Integration - Date/Time Operations", () => {
         from(dbContext, "orders")
           .where((o) => o.order_date >= new Date("2024-01-01"))
           .groupBy(() => ({
-            year: 2024,  // Simplified - would need EXTRACT(YEAR FROM order_date)
-            month: 1     // Simplified - would need EXTRACT(MONTH FROM order_date)
+            year: 2024, // Simplified - would need EXTRACT(YEAR FROM order_date)
+            month: 1, // Simplified - would need EXTRACT(MONTH FROM order_date)
           }))
           .select((g) => ({
             year: g.key.year,
             month: g.key.month,
             orderCount: g.count(),
-            totalRevenue: g.sum((o) => o.total_amount)
-          }))
+            totalRevenue: g.sum((o) => o.total_amount),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -151,9 +146,9 @@ describe("PostgreSQL Integration - Date/Time Operations", () => {
             name: e.first_name,
             hireDate: e.hire_date,
             // Simplified tenure calculation - days since hire
-            tenureDays: (new Date().getTime() - e.hire_date.getTime()) / (1000 * 60 * 60 * 24)
+            tenureDays: (new Date().getTime() - e.hire_date.getTime()) / (1000 * 60 * 60 * 24),
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -166,19 +161,20 @@ describe("PostgreSQL Integration - Date/Time Operations", () => {
     it("should find records within date ranges", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "projects")
-          .where((p) =>
-            p.start_date !== null &&
-            p.end_date !== null &&
-            p.start_date <= new Date() &&
-            p.end_date >= new Date()
+          .where(
+            (p) =>
+              p.start_date !== null &&
+              p.end_date !== null &&
+              p.start_date <= new Date() &&
+              p.end_date >= new Date(),
           )
           .select((p) => ({
             code: p.code,
             name: p.name,
             status: p.status,
             startDate: p.start_date,
-            endDate: p.end_date
-          }))
+            endDate: p.end_date,
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -202,8 +198,8 @@ describe("PostgreSQL Integration - Date/Time Operations", () => {
           .select((u) => ({
             id: u.id,
             name: u.name,
-            createdAt: u.created_at
-          }))
+            createdAt: u.created_at,
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -228,10 +224,10 @@ describe("PostgreSQL Integration - Date/Time Operations", () => {
           .select((p) => ({
             id: p.id,
             name: p.name,
-            updatedAt: p.updated_at
+            updatedAt: p.updated_at,
           }))
           .orderByDescending((p) => p.updatedAt)
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -249,9 +245,9 @@ describe("PostgreSQL Integration - Date/Time Operations", () => {
           .select((o) => ({
             orderNumber: o.order_number,
             status: o.status,
-            deliveryDate: o.delivery_date
+            deliveryDate: o.delivery_date,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -269,9 +265,9 @@ describe("PostgreSQL Integration - Date/Time Operations", () => {
           .select((o) => ({
             orderNumber: o.order_number,
             shipDate: o.ship_date,
-            effectiveShipDate: o.ship_date ?? defaultDate
+            effectiveShipDate: o.ship_date ?? defaultDate,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");

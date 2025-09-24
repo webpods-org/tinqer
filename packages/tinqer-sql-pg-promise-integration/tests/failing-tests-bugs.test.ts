@@ -21,7 +21,6 @@ describe("Failing Tests - Document Bugs", () => {
     it.skip("should filter groups with HAVING count condition - NOT IMPLEMENTED", async () => {
       // This test fails with: Error: Failed to parse query
       // HAVING clause is defined in operations.d.ts but not implemented in SQL adapter
-
       // const results = await executeSimple(db, () =>
       //   from(dbContext, "orders")
       //     .groupBy((o) => ({ userId: o.user_id }))
@@ -31,7 +30,6 @@ describe("Failing Tests - Document Bugs", () => {
       //       orderCount: g.count()
       //     }))
       // );
-
       // expect(results).to.be.an("array");
       // results.forEach((row: any) => {
       //   expect(row.orderCount).to.be.greaterThan(2);
@@ -40,7 +38,6 @@ describe("Failing Tests - Document Bugs", () => {
 
     it.skip("should filter with HAVING on aggregate sum - NOT IMPLEMENTED", async () => {
       // HAVING with SUM aggregate
-
       // const results = await executeSimple(db, () =>
       //   from(dbContext, "orders")
       //     .groupBy((o) => ({ userId: o.user_id }))
@@ -50,7 +47,6 @@ describe("Failing Tests - Document Bugs", () => {
       //       totalSpent: g.sum((o: any) => o.total_amount)
       //     }))
       // );
-
       // expect(results).to.be.an("array");
       // results.forEach((row: any) => {
       //   expect(row.totalSpent).to.be.greaterThan(1000);
@@ -75,10 +71,10 @@ describe("Failing Tests - Document Bugs", () => {
               managerFirstName: m.first_name,
               managerLastName: m.last_name,
               employeeTitle: e.job_title,
-              managerTitle: m.job_title
-            })
+              managerTitle: m.job_title,
+            }),
           )
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -100,7 +96,7 @@ describe("Failing Tests - Document Bugs", () => {
             from(dbContext, "departments"),
             (u) => u.department_id,
             (d) => d.id,
-            (u, d) => ({ user: u, dept: d })
+            (u, d) => ({ user: u, dept: d }),
           )
           .join(
             from(dbContext, "companies"),
@@ -109,10 +105,10 @@ describe("Failing Tests - Document Bugs", () => {
             (ud, c) => ({
               userName: ud.user.name,
               departmentName: ud.dept.name,
-              companyName: c.name
-            })
+              companyName: c.name,
+            }),
           )
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -128,9 +124,9 @@ describe("Failing Tests - Document Bugs", () => {
         from(dbContext, "employees")
           .select((e) => ({
             fullName: e.first_name + " " + e.last_name, // This concatenation fails
-            title: e.job_title
+            title: e.job_title,
           }))
-          .take(5)
+          .take(5),
       );
 
       expect(results).to.be.an("array");
@@ -160,13 +156,12 @@ describe("Failing Tests - Document Bugs", () => {
     it.skip("should use scalar subquery in SELECT - NOT IMPLEMENTED", async () => {
       // Scalar subqueries in SELECT are not supported
       const results = await executeSimple(db, () =>
-        from(dbContext, "users")
-          .select((u) => ({
-            name: u.name,
-            orderCount: from(dbContext, "orders")
-              .where((o) => o.user_id === u.id)
-              .count()
-          }))
+        from(dbContext, "users").select((u) => ({
+          name: u.name,
+          orderCount: from(dbContext, "orders")
+            .where((o) => o.user_id === u.id)
+            .count(),
+        })),
       );
 
       expect(results).to.be.an("array");
@@ -178,14 +173,10 @@ describe("Failing Tests - Document Bugs", () => {
       // CASE/WHEN expressions are not supported
       // Would need conditional expression support
       const results = await executeSimple(db, () =>
-        from(dbContext, "products")
-          .select((p) => ({
-            name: p.name,
-            priceCategory:
-              p.price > 1000 ? "Expensive" :
-              p.price > 100 ? "Moderate" :
-              "Cheap"
-          }))
+        from(dbContext, "products").select((p) => ({
+          name: p.name,
+          priceCategory: p.price > 1000 ? "Expensive" : p.price > 100 ? "Moderate" : "Cheap",
+        })),
       );
 
       expect(results).to.be.an("array");
@@ -219,10 +210,7 @@ describe("Failing Tests - Document Bugs", () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "users")
           .where((u) => u.department_id === 1)
-          .union(
-            from(dbContext, "users")
-              .where((u) => u.is_active === true)
-          )
+          .union(from(dbContext, "users").where((u) => u.is_active === true)),
       );
 
       expect(results).to.be.an("array");

@@ -25,7 +25,7 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
         "admin'--",
         "' UNION SELECT * FROM users--",
         "'; DELETE FROM products WHERE '1'='1",
-        "Robert'); DROP TABLE students;--"
+        "Robert'); DROP TABLE students;--",
       ];
 
       for (const maliciousInput of maliciousInputs) {
@@ -34,10 +34,11 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
         // This should safely parameterize the input, not execute the malicious SQL
         const results = await execute(
           db,
-          (p) => from(dbContext, "users")
-            .where((u) => u.name === p.searchTerm)
-            .select((u) => ({ id: u.id, name: u.name })),
-          params
+          (p) =>
+            from(dbContext, "users")
+              .where((u) => u.name === p.searchTerm)
+              .select((u) => ({ id: u.id, name: u.name })),
+          params,
         );
 
         // Should return empty array, not throw error or execute injection
@@ -46,9 +47,7 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
       }
 
       // Verify tables still exist (injection didn't succeed)
-      const checkUsers = await executeSimple(db, () =>
-        from(dbContext, "users").count()
-      );
+      const checkUsers = await executeSimple(db, () => from(dbContext, "users").count());
       expect(checkUsers).to.be.greaterThan(0);
     });
 
@@ -61,7 +60,7 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
         'test"test',
         "test`test",
         "test;test",
-        "test/*comment*/test"
+        "test/*comment*/test",
       ];
 
       for (const pattern of specialPatterns) {
@@ -69,10 +68,11 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
 
         const results = await execute(
           db,
-          (p) => from(dbContext, "products")
-            .where((pr) => pr.name.includes(p.pattern))
-            .select((pr) => ({ name: pr.name })),
-          params
+          (p) =>
+            from(dbContext, "products")
+              .where((pr) => pr.name.includes(p.pattern))
+              .select((pr) => ({ name: pr.name })),
+          params,
         );
 
         expect(results).to.be.an("array");
@@ -83,11 +83,7 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
 
   describe("Numeric injection attempts", () => {
     it("should safely handle numeric injection attempts", async () => {
-      const maliciousNumbers = [
-        "1 OR 1=1",
-        "1; DROP TABLE users",
-        "1 UNION SELECT * FROM users"
-      ];
+      const maliciousNumbers = ["1 OR 1=1", "1; DROP TABLE users", "1 UNION SELECT * FROM users"];
 
       for (const maliciousInput of maliciousNumbers) {
         // Even though we expect a number, malicious string should be handled safely
@@ -96,10 +92,11 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
         try {
           const results = await execute(
             db,
-            (p) => from(dbContext, "users")
-              .where((u) => u.id === p.userId)
-              .select((u) => ({ id: u.id })),
-            params
+            (p) =>
+              from(dbContext, "users")
+                .where((u) => u.id === p.userId)
+                .select((u) => ({ id: u.id })),
+            params,
           );
 
           // Should either return empty or throw type error, not execute injection
@@ -114,11 +111,7 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
 
   describe("Boolean injection attempts", () => {
     it("should safely handle boolean injection attempts", async () => {
-      const maliciousBooleans = [
-        "true; DROP TABLE users",
-        "false OR 1=1",
-        "true' OR '1'='1"
-      ];
+      const maliciousBooleans = ["true; DROP TABLE users", "false OR 1=1", "true' OR '1'='1"];
 
       for (const maliciousInput of maliciousBooleans) {
         const params = { isActive: maliciousInput as any };
@@ -126,10 +119,11 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
         try {
           const results = await execute(
             db,
-            (p) => from(dbContext, "users")
-              .where((u) => u.is_active === p.isActive)
-              .select((u) => ({ id: u.id })),
-            params
+            (p) =>
+              from(dbContext, "users")
+                .where((u) => u.is_active === p.isActive)
+                .select((u) => ({ id: u.id })),
+            params,
           );
 
           expect(results).to.be.an("array");
@@ -146,19 +140,16 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
       const params = {
         name: "'; DROP TABLE users; --",
         email: "test@test.com' OR '1'='1",
-        age: "25 OR 1=1"
+        age: "25 OR 1=1",
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "users")
-          .where((u) =>
-            u.name === p.name &&
-            u.email === p.email &&
-            u.age === parseInt(p.age)
-          )
-          .select((u) => ({ id: u.id })),
-        params
+        (p) =>
+          from(dbContext, "users")
+            .where((u) => u.name === p.name && u.email === p.email && u.age === parseInt(p.age))
+            .select((u) => ({ id: u.id })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -167,15 +158,16 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
 
     it("should safely handle injection in LIKE patterns", async () => {
       const params = {
-        pattern: "%' OR '1'='1"
+        pattern: "%' OR '1'='1",
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => pr.name.startsWith(p.pattern))
-          .select((pr) => ({ name: pr.name })),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.name.startsWith(p.pattern))
+            .select((pr) => ({ name: pr.name })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -186,17 +178,18 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
       // Note: ORDER BY injection is harder since we don't allow dynamic column names
       // But we should still test that computed expressions are safe
       const params = {
-        multiplier: "1; DROP TABLE users"
+        multiplier: "1; DROP TABLE users",
       };
 
       try {
         const results = await execute(
           db,
-          (p) => from(dbContext, "products")
-            .orderBy((pr) => pr.price * (parseInt(p.multiplier) || 1))
-            .take(5)
-            .select((pr) => ({ name: pr.name })),
-          params
+          (p) =>
+            from(dbContext, "products")
+              .orderBy((pr) => pr.price * (parseInt(p.multiplier) || 1))
+              .take(5)
+              .select((pr) => ({ name: pr.name })),
+          params,
         );
 
         expect(results).to.be.an("array");
@@ -210,15 +203,16 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
   describe("NULL and undefined injection", () => {
     it("should handle NULL injection attempts", async () => {
       const params = {
-        value: "NULL; DROP TABLE users"
+        value: "NULL; DROP TABLE users",
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "users")
-          .where((u) => u.phone === p.value)
-          .select((u) => ({ id: u.id })),
-        params
+        (p) =>
+          from(dbContext, "users")
+            .where((u) => u.phone === p.value)
+            .select((u) => ({ id: u.id })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -232,7 +226,7 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
         "test /* comment */ test",
         "test -- comment",
         "test # comment",
-        "test /* ; DROP TABLE users */ test"
+        "test /* ; DROP TABLE users */ test",
       ];
 
       for (const injection of commentInjections) {
@@ -240,10 +234,11 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
 
         const results = await execute(
           db,
-          (p) => from(dbContext, "products")
-            .where((pr) => pr.name === p.search)
-            .select((pr) => ({ name: pr.name })),
-          params
+          (p) =>
+            from(dbContext, "products")
+              .where((pr) => pr.name === p.search)
+              .select((pr) => ({ name: pr.name })),
+          params,
         );
 
         expect(results).to.be.an("array");
@@ -256,7 +251,7 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
     it("should handle hex-encoded injection attempts", async () => {
       const hexInjections = [
         "0x27204F52202731273D2731", // Hex encoding of ' OR '1'='1
-        String.fromCharCode(0x27, 0x3B, 0x20, 0x44, 0x52, 0x4F, 0x50), // '; DROP
+        String.fromCharCode(0x27, 0x3b, 0x20, 0x44, 0x52, 0x4f, 0x50), // '; DROP
       ];
 
       for (const injection of hexInjections) {
@@ -264,10 +259,11 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
 
         const results = await execute(
           db,
-          (p) => from(dbContext, "users")
-            .where((u) => u.name === p.input)
-            .select((u) => ({ name: u.name })),
-          params
+          (p) =>
+            from(dbContext, "users")
+              .where((u) => u.name === p.input)
+              .select((u) => ({ name: u.name })),
+          params,
         );
 
         expect(results).to.be.an("array");
@@ -283,22 +279,23 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
       // First, insert a test user with special characters
       await db.none(
         "INSERT INTO users (name, email, created_at, updated_at) VALUES ($1, $2, NOW(), NOW()) ON CONFLICT DO NOTHING",
-        ["O'Connor", "oconnor@test.com"]
+        ["O'Connor", "oconnor@test.com"],
       );
 
       const params = { name: "O'Connor" };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "users")
-          .where((u) => u.name === p.name)
-          .select((u) => ({ name: u.name })),
-        params
+        (p) =>
+          from(dbContext, "users")
+            .where((u) => u.name === p.name)
+            .select((u) => ({ name: u.name })),
+        params,
       );
 
       expect(results).to.be.an("array");
       // Should find the user with apostrophe in name
-      const found = results.find(u => u.name === "O'Connor");
+      const found = results.find((u) => u.name === "O'Connor");
       expect(found).to.exist;
     });
   });

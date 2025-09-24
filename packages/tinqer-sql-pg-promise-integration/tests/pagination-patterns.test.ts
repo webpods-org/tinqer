@@ -20,12 +20,12 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
   describe("Basic pagination with SKIP and TAKE", () => {
     it("should paginate with take only", async () => {
       const pageSize = 10;
-      
+
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
           .orderBy((p) => p.id)
           .take(pageSize)
-          .select((p) => ({ id: p.id, name: p.name }))
+          .select((p) => ({ id: p.id, name: p.name })),
       );
 
       expect(results).to.be.an("array");
@@ -37,13 +37,13 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
     it("should paginate with skip and take", async () => {
       const pageSize = 10;
       const pageNumber = 2; // Zero-indexed, so this is the 3rd page
-      
+
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
           .orderBy((p) => p.id)
           .skip(pageNumber * pageSize)
           .take(pageSize)
-          .select((p) => ({ id: p.id, name: p.name }))
+          .select((p) => ({ id: p.id, name: p.name })),
       );
 
       expect(results).to.be.an("array");
@@ -56,19 +56,17 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
 
     it("should handle last page with partial results", async () => {
       // Get total count first
-      const totalCount = await executeSimple(db, () =>
-        from(dbContext, "users").count()
-      );
+      const totalCount = await executeSimple(db, () => from(dbContext, "users").count());
 
       const pageSize = 10;
       const lastPageStart = Math.floor(totalCount / pageSize) * pageSize;
-      
+
       const results = await executeSimple(db, () =>
         from(dbContext, "users")
           .orderBy((u) => u.id)
           .skip(lastPageStart)
           .take(pageSize)
-          .select((u) => ({ id: u.id }))
+          .select((u) => ({ id: u.id })),
       );
 
       expect(results).to.be.an("array");
@@ -80,20 +78,21 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
     it("should paginate using parameters", async () => {
       const params = {
         offset: 10,
-        limit: 5
+        limit: 5,
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "orders")
-          .orderBy((o) => o.order_date)
-          .skip(p.offset)
-          .take(p.limit)
-          .select((o) => ({ 
-            id: o.id, 
-            orderNumber: o.order_number 
-          })),
-        params
+        (p) =>
+          from(dbContext, "orders")
+            .orderBy((o) => o.order_date)
+            .skip(p.offset)
+            .take(p.limit)
+            .select((o) => ({
+              id: o.id,
+              orderNumber: o.order_number,
+            })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -103,17 +102,18 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
     it("should implement page number based pagination", async () => {
       const params = {
         page: 3, // 1-indexed page number
-        pageSize: 15
+        pageSize: 15,
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .orderBy((pr) => pr.id)
-          .skip((p.page - 1) * p.pageSize)
-          .take(p.pageSize)
-          .select((pr) => ({ id: pr.id })),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .orderBy((pr) => pr.id)
+            .skip((p.page - 1) * p.pageSize)
+            .take(p.pageSize)
+            .select((pr) => ({ id: pr.id })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -131,7 +131,7 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
         from(dbContext, "products")
           .orderBy((p) => p.price)
           .take(5)
-          .select((p) => ({ id: p.id, price: p.price }))
+          .select((p) => ({ id: p.id, price: p.price })),
       );
 
       const page2 = await executeSimple(db, () =>
@@ -139,16 +139,16 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
           .orderBy((p) => p.price)
           .skip(5)
           .take(5)
-          .select((p) => ({ id: p.id, price: p.price }))
+          .select((p) => ({ id: p.id, price: p.price })),
       );
 
       expect(page1).to.be.an("array");
       expect(page2).to.be.an("array");
-      
+
       // Page 2 prices should be >= page 1 max price
       if (page1.length > 0 && page2.length > 0) {
-        const page1MaxPrice = Math.max(...page1.map(p => p.price));
-        const page2MinPrice = Math.min(...page2.map(p => p.price));
+        const page1MaxPrice = Math.max(...page1.map((p) => p.price));
+        const page2MinPrice = Math.min(...page2.map((p) => p.price));
         expect(page2MinPrice).to.be.greaterThanOrEqual(page1MaxPrice);
       }
     });
@@ -159,10 +159,10 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
           .orderByDescending((o) => o.total_amount)
           .skip(5)
           .take(10)
-          .select((o) => ({ 
-            id: o.id, 
-            total: o.total_amount 
-          }))
+          .select((o) => ({
+            id: o.id,
+            total: o.total_amount,
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -179,11 +179,11 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
           .thenByDescending((p) => p.price)
           .skip(10)
           .take(10)
-          .select((p) => ({ 
+          .select((p) => ({
             id: p.id,
             category: p.category_id,
-            price: p.price 
-          }))
+            price: p.price,
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -193,7 +193,7 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
         const curr = results[i]!;
         const prevCat = prev.category ?? 999999;
         const currCat = curr.category ?? 999999;
-        
+
         if (prevCat === currCat) {
           expect(prev.price).to.be.greaterThanOrEqual(curr.price);
         } else {
@@ -211,10 +211,10 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
           .orderBy((p) => p.id)
           .skip(5)
           .take(10)
-          .select((p) => ({ 
-            id: p.id, 
-            price: p.price 
-          }))
+          .select((p) => ({
+            id: p.id,
+            price: p.price,
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -228,26 +228,23 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
         minPrice: 50,
         maxPrice: 500,
         offset: 0,
-        limit: 15
+        limit: 15,
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => 
-            pr.price >= p.minPrice &&
-            pr.price <= p.maxPrice &&
-            pr.stock > 0
-          )
-          .orderBy((pr) => pr.price)
-          .skip(p.offset)
-          .take(p.limit)
-          .select((pr) => ({ 
-            id: pr.id,
-            price: pr.price,
-            stock: pr.stock
-          })),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.price >= p.minPrice && pr.price <= p.maxPrice && pr.stock > 0)
+            .orderBy((pr) => pr.price)
+            .skip(p.offset)
+            .take(p.limit)
+            .select((pr) => ({
+              id: pr.id,
+              price: pr.price,
+              stock: pr.stock,
+            })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -266,11 +263,11 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
           .select((g) => ({
             userId: g.key,
             orderCount: g.count(),
-            totalSpent: g.sum((o) => o.total_amount)
+            totalSpent: g.sum((o) => o.total_amount),
           }))
           .orderByDescending((r) => r.totalSpent)
           .skip(5)
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -288,13 +285,13 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
           .distinct()
           .orderBy((r) => r.status)
           .skip(1)
-          .take(3)
+          .take(3),
       );
 
       expect(results).to.be.an("array");
       expect(results.length).to.be.lessThanOrEqual(3);
       // Check uniqueness
-      const statuses = results.map(r => r.status);
+      const statuses = results.map((r) => r.status);
       const uniqueStatuses = [...new Set(statuses)];
       expect(statuses.length).to.equal(uniqueStatuses.length);
     });
@@ -307,7 +304,7 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
         from(dbContext, "users")
           .orderBy((u) => u.id)
           .take(10)
-          .select((u) => ({ id: u.id, name: u.name }))
+          .select((u) => ({ id: u.id, name: u.name })),
       );
 
       expect(firstPage).to.have.lengthOf(10);
@@ -319,7 +316,7 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
           .where((u) => u.id > lastId)
           .orderBy((u) => u.id)
           .take(10)
-          .select((u) => ({ id: u.id, name: u.name }))
+          .select((u) => ({ id: u.id, name: u.name })),
       );
 
       expect(nextPage).to.be.an("array");
@@ -334,10 +331,10 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
         from(dbContext, "orders")
           .orderByDescending((o) => o.order_date)
           .take(5)
-          .select((o) => ({ 
+          .select((o) => ({
             id: o.id,
-            orderDate: o.order_date 
-          }))
+            orderDate: o.order_date,
+          })),
       );
 
       if (firstPage.length > 0) {
@@ -349,16 +346,17 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
             .where((o) => o.order_date < lastDate)
             .orderByDescending((o) => o.order_date)
             .take(5)
-            .select((o) => ({ 
+            .select((o) => ({
               id: o.id,
-              orderDate: o.order_date 
-            }))
+              orderDate: o.order_date,
+            })),
         );
 
         expect(nextPage).to.be.an("array");
         if (nextPage.length > 0) {
-          expect(new Date(nextPage[0]!.orderDate).getTime())
-            .to.be.lessThan(new Date(lastDate).getTime());
+          expect(new Date(nextPage[0]!.orderDate).getTime()).to.be.lessThan(
+            new Date(lastDate).getTime(),
+          );
         }
       }
     });
@@ -370,7 +368,7 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
         from(dbContext, "categories")
           .skip(999999)
           .take(10)
-          .select((c) => ({ id: c.id }))
+          .select((c) => ({ id: c.id })),
       );
 
       expect(results).to.be.an("array");
@@ -381,7 +379,7 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
           .take(0)
-          .select((p) => ({ id: p.id }))
+          .select((p) => ({ id: p.id })),
       );
 
       expect(results).to.be.an("array");
@@ -394,7 +392,7 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
           .orderBy((p) => p.id)
           .skip(0)
           .take(5)
-          .select((p) => ({ id: p.id }))
+          .select((p) => ({ id: p.id })),
       );
 
       expect(results).to.be.an("array");
@@ -403,14 +401,12 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
     });
 
     it("should handle very large take values", async () => {
-      const totalCount = await executeSimple(db, () =>
-        from(dbContext, "departments").count()
-      );
+      const totalCount = await executeSimple(db, () => from(dbContext, "departments").count());
 
       const results = await executeSimple(db, () =>
         from(dbContext, "departments")
           .take(999999)
-          .select((d) => ({ id: d.id }))
+          .select((d) => ({ id: d.id })),
       );
 
       expect(results).to.be.an("array");
@@ -421,13 +417,13 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
   describe("Pagination performance patterns", () => {
     it("should efficiently paginate with indexed columns", async () => {
       const startTime = Date.now();
-      
+
       const results = await executeSimple(db, () =>
         from(dbContext, "users")
           .orderBy((u) => u.id) // ID is primary key, indexed
           .skip(100)
           .take(10)
-          .select((u) => ({ id: u.id }))
+          .select((u) => ({ id: u.id })),
       );
 
       const duration = Date.now() - startTime;
@@ -442,7 +438,7 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
         executeSimple(db, () =>
           from(dbContext, "products")
             .where((p) => p.stock > 0)
-            .count()
+            .count(),
         ),
         executeSimple(db, () =>
           from(dbContext, "products")
@@ -450,13 +446,13 @@ describe("PostgreSQL Integration - Pagination Patterns", () => {
             .orderBy((p) => p.id)
             .skip(10)
             .take(10)
-            .select((p) => ({ id: p.id, name: p.name }))
-        )
+            .select((p) => ({ id: p.id, name: p.name })),
+        ),
       ]);
 
       expect(totalCount).to.be.a("number");
       expect(pageData).to.be.an("array");
-      
+
       const totalPages = Math.ceil(totalCount / 10);
       expect(totalPages).to.be.greaterThan(0);
     });

@@ -20,19 +20,17 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
     it("should handle maximum safe integer values", async () => {
       const params = {
         maxValue: Number.MAX_SAFE_INTEGER,
-        minValue: Number.MIN_SAFE_INTEGER
+        minValue: Number.MIN_SAFE_INTEGER,
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) =>
-            pr.price < p.maxValue &&
-            pr.price > p.minValue
-          )
-          .select((pr) => ({ id: pr.id, price: pr.price }))
-          .take(5),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.price < p.maxValue && pr.price > p.minValue)
+            .select((pr) => ({ id: pr.id, price: pr.price }))
+            .take(5),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -46,7 +44,7 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
           .where((p) => p.stock === 0)
-          .select((p) => ({ id: p.id, name: p.name, stock: p.stock }))
+          .select((p) => ({ id: p.id, name: p.name, stock: p.stock })),
       );
 
       expect(results).to.be.an("array");
@@ -64,9 +62,9 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
             id: p.id,
             price: p.price,
             cost: p.cost,
-            loss: (p.cost ?? 0) - p.price // Could be negative (profit)
+            loss: (p.cost ?? 0) - p.price, // Could be negative (profit)
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -79,18 +77,16 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
     it("should handle very small decimal values", async () => {
       const params = {
         epsilon: 0.000001,
-        threshold: 0.01
+        threshold: 0.01,
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) =>
-            pr.price > p.epsilon &&
-            pr.price < p.threshold
-          )
-          .select((pr) => ({ price: pr.price })),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.price > p.epsilon && pr.price < p.threshold)
+            .select((pr) => ({ price: pr.price })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -104,10 +100,11 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => pr.description === p.emptyString)
-          .select((pr) => ({ id: pr.id, description: pr.description })),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.description === p.emptyString)
+            .select((pr) => ({ id: pr.id, description: pr.description })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -122,10 +119,11 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => pr.description === p.search)
-          .select((pr) => ({ id: pr.id })),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.description === p.search)
+            .select((pr) => ({ id: pr.id })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -133,24 +131,18 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
     });
 
     it("should handle strings with only whitespace", async () => {
-      const whitespaceStrings = [
-        " ",
-        "  ",
-        "\t",
-        "\n",
-        "\r\n",
-        " \t \n "
-      ];
+      const whitespaceStrings = [" ", "  ", "\t", "\n", "\r\n", " \t \n "];
 
       for (const ws of whitespaceStrings) {
         const params = { whitespace: ws };
 
         const results = await execute(
           db,
-          (p) => from(dbContext, "users")
-            .where((u) => u.name === p.whitespace)
-            .select((u) => ({ name: u.name })),
-          params
+          (p) =>
+            from(dbContext, "users")
+              .where((u) => u.name === p.whitespace)
+              .select((u) => ({ name: u.name })),
+          params,
         );
 
         expect(results).to.be.an("array");
@@ -172,10 +164,11 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
 
         const results = await execute(
           db,
-          (p) => from(dbContext, "products")
-            .where((pr) => pr.name === p.text)
-            .select((pr) => ({ name: pr.name })),
-          params
+          (p) =>
+            from(dbContext, "products")
+              .where((pr) => pr.name === p.text)
+              .select((pr) => ({ name: pr.name })),
+          params,
         );
 
         expect(results).to.be.an("array");
@@ -187,8 +180,7 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
   describe("Array boundary cases", () => {
     it("should handle empty arrays in IN operations", async () => {
       const results = await executeSimple(db, () =>
-        from(dbContext, "users")
-          .where((u) => ([] as number[]).includes(u.id))
+        from(dbContext, "users").where((u) => ([] as number[]).includes(u.id)),
       );
 
       expect(results).to.be.an("array");
@@ -199,7 +191,7 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "users")
           .where((u) => [1].includes(u.id))
-          .select((u) => ({ id: u.id }))
+          .select((u) => ({ id: u.id })),
       );
 
       expect(results).to.be.an("array");
@@ -215,7 +207,7 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
         from(dbContext, "products")
           .where((p) => largeArray.includes(p.id))
           .select((p) => ({ id: p.id }))
-          .take(50)
+          .take(50),
       );
 
       expect(results).to.be.an("array");
@@ -229,18 +221,19 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
     it("should handle all NULL columns", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "users")
-          .where((u) =>
-            u.phone === null &&
-            u.address === null &&
-            u.salary === null &&
-            u.department_id === null
+          .where(
+            (u) =>
+              u.phone === null &&
+              u.address === null &&
+              u.salary === null &&
+              u.department_id === null,
           )
           .select((u) => ({
             id: u.id,
             phone: u.phone,
             address: u.address,
-            salary: u.salary
-          }))
+            salary: u.salary,
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -258,9 +251,9 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
           .select((p) => ({
             id: p.id,
             profit: p.price - (p.cost ?? 0),
-            nullProfit: p.price - p.cost! // This would be NULL
+            nullProfit: p.price - p.cost!, // This would be NULL
           }))
-          .take(5)
+          .take(5),
       );
 
       expect(results).to.be.an("array");
@@ -278,7 +271,7 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
           .orderBy((p) => p.id)
           .skip(0)
           .take(5)
-          .select((p) => ({ id: p.id }))
+          .select((p) => ({ id: p.id })),
       );
 
       expect(results).to.be.an("array");
@@ -290,7 +283,7 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
           .take(0)
-          .select((p) => ({ id: p.id }))
+          .select((p) => ({ id: p.id })),
       );
 
       expect(results).to.be.an("array");
@@ -302,7 +295,7 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
         from(dbContext, "products")
           .skip(999999)
           .take(10)
-          .select((p) => ({ id: p.id }))
+          .select((p) => ({ id: p.id })),
       );
 
       expect(results).to.be.an("array");
@@ -310,14 +303,12 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
     });
 
     it("should handle very large TAKE values", async () => {
-      const allProducts = await executeSimple(db, () =>
-        from(dbContext, "products").count()
-      );
+      const allProducts = await executeSimple(db, () => from(dbContext, "products").count());
 
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
           .take(999999)
-          .select((p) => ({ id: p.id }))
+          .select((p) => ({ id: p.id })),
       );
 
       expect(results).to.be.an("array");
@@ -331,21 +322,21 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
       const activeUsers = await executeSimple(db, () =>
         from(dbContext, "users")
           .where((u) => u.is_active === true)
-          .count()
+          .count(),
       );
 
       // Test false
       const inactiveUsers = await executeSimple(db, () =>
         from(dbContext, "users")
           .where((u) => u.is_active === false)
-          .count()
+          .count(),
       );
 
       // Test NOT
       const notActiveUsers = await executeSimple(db, () =>
         from(dbContext, "users")
           .where((u) => !u.is_active)
-          .count()
+          .count(),
       );
 
       expect(activeUsers).to.be.a("number");
@@ -360,9 +351,9 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
             id: p.id,
             isFeatured: p.is_featured,
             notFeatured: !p.is_featured,
-            featuredOrNull: p.is_featured ?? false
+            featuredOrNull: p.is_featured ?? false,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -381,10 +372,11 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "orders")
-          .where((o) => o.order_date < p.futureDate)
-          .count(),
-        params
+        (p) =>
+          from(dbContext, "orders")
+            .where((o) => o.order_date < p.futureDate)
+            .count(),
+        params,
       );
 
       expect(results).to.be.a("number");
@@ -397,10 +389,11 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "orders")
-          .where((o) => o.order_date > p.oldDate)
-          .count(),
-        params
+        (p) =>
+          from(dbContext, "orders")
+            .where((o) => o.order_date > p.oldDate)
+            .count(),
+        params,
       );
 
       expect(results).to.be.a("number");
@@ -410,9 +403,7 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
 
   describe("Performance boundary cases", () => {
     it("should handle queries returning all rows", async () => {
-      const results = await executeSimple(db, () =>
-        from(dbContext, "users")
-      );
+      const results = await executeSimple(db, () => from(dbContext, "users"));
 
       expect(results).to.be.an("array");
       expect(results.length).to.be.greaterThan(0);
@@ -422,18 +413,19 @@ describe("PostgreSQL Integration - Edge Cases and Boundary Values", () => {
     it("should handle deeply nested conditions", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
-          .where((p) =>
-            (p.price > 100 && p.price < 200) ||
-            (p.price > 200 && p.price < 300) ||
-            (p.price > 300 && p.price < 400) ||
-            (p.price > 400 && p.price < 500) ||
-            (p.price > 500 && p.price < 600) ||
-            (p.price > 600 && p.price < 700) ||
-            (p.price > 700 && p.price < 800) ||
-            (p.price > 800 && p.price < 900)
+          .where(
+            (p) =>
+              (p.price > 100 && p.price < 200) ||
+              (p.price > 200 && p.price < 300) ||
+              (p.price > 300 && p.price < 400) ||
+              (p.price > 400 && p.price < 500) ||
+              (p.price > 500 && p.price < 600) ||
+              (p.price > 600 && p.price < 700) ||
+              (p.price > 700 && p.price < 800) ||
+              (p.price > 800 && p.price < 900),
           )
           .select((p) => ({ id: p.id, price: p.price }))
-          .take(20)
+          .take(20),
       );
 
       expect(results).to.be.an("array");

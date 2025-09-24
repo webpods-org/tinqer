@@ -26,9 +26,9 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
             id: e.id,
             firstName: e.first_name,
             lastName: e.last_name,
-            managerId: e.manager_id
+            managerId: e.manager_id,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -46,8 +46,8 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
             id: e.id,
             firstName: e.first_name,
             lastName: e.last_name,
-            jobTitle: e.job_title
-          }))
+            jobTitle: e.job_title,
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -87,9 +87,9 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
           .groupBy((e) => e.manager_id)
           .select((g) => ({
             managerId: g.key,
-            directReports: g.count()
+            directReports: g.count(),
           }))
-          .orderByDescending((r) => r.directReports)
+          .orderByDescending((r) => r.directReports),
       );
 
       expect(results).to.be.an("array");
@@ -108,8 +108,8 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
           .select((c) => ({
             id: c.id,
             name: c.name,
-            path: c.path
-          }))
+            path: c.path,
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -127,8 +127,8 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
           .groupBy((c) => c.parent_id)
           .select((g) => ({
             parentId: g.key,
-            childCount: g.count()
-          }))
+            childCount: g.count(),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -144,10 +144,10 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
         from(dbContext, "categories")
           .where((c) => c.parent_id !== null)
           .select((c) => ({ parentId: c.parent_id }))
-          .distinct()
+          .distinct(),
       );
 
-      const parentIdList = parentIds.map(p => p.parentId!);
+      const parentIdList = parentIds.map((p) => p.parentId!);
 
       // Find categories that are NOT in the parent list
       const leafCategories = await executeSimple(db, () =>
@@ -156,9 +156,9 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
           .select((c) => ({
             id: c.id,
             name: c.name,
-            parentId: c.parent_id
+            parentId: c.parent_id,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(leafCategories).to.be.an("array");
@@ -170,10 +170,10 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
       const rootCategories = await executeSimple(db, () =>
         from(dbContext, "categories")
           .where((c) => c.parent_id === null)
-          .select((c) => ({ id: c.id }))
+          .select((c) => ({ id: c.id })),
       );
 
-      const rootCatIds = rootCategories.map(c => c.id);
+      const rootCatIds = rootCategories.map((c) => c.id);
 
       const rootCategoryProducts = await executeSimple(db, () =>
         from(dbContext, "products")
@@ -181,8 +181,8 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
           .groupBy((p) => p.category_id)
           .select((g) => ({
             categoryId: g.key,
-            productCount: g.count()
-          }))
+            productCount: g.count(),
+          })),
       );
 
       expect(rootCategoryProducts).to.be.an("array");
@@ -202,8 +202,8 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
           .select((d) => ({
             id: d.id,
             name: d.name,
-            parentId: d.parent_dept_id
-          }))
+            parentId: d.parent_dept_id,
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -219,9 +219,9 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
           .groupBy((u) => u.department_id)
           .select((g) => ({
             deptId: g.key,
-            employeeCount: g.count()
+            employeeCount: g.count(),
           }))
-          .orderByDescending((r) => r.employeeCount)
+          .orderByDescending((r) => r.employeeCount),
       );
 
       expect(results).to.be.an("array");
@@ -236,14 +236,14 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
       const rootDepts = await executeSimple(db, () =>
         from(dbContext, "departments")
           .where((d) => d.parent_dept_id === null)
-          .count()
+          .count(),
       );
 
       // Level 1: Departments with parent
       const level1Depts = await executeSimple(db, () =>
         from(dbContext, "departments")
           .where((d) => d.parent_dept_id !== null)
-          .count()
+          .count(),
       );
 
       expect(rootDepts).to.be.a("number");
@@ -259,7 +259,7 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
         from(dbContext, "departments")
           .where((d) => d.parent_dept_id === null)
           .select((d) => ({ id: d.id, name: d.name }))
-          .take(1)
+          .take(1),
       );
 
       if (parentDepts.length > 0) {
@@ -269,10 +269,10 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
         const subDepts = await executeSimple(db, () =>
           from(dbContext, "departments")
             .where((d) => d.parent_dept_id === parentDeptId)
-            .select((d) => ({ id: d.id }))
+            .select((d) => ({ id: d.id })),
         );
 
-        const allDeptIds = [parentDeptId, ...subDepts.map(d => d.id)];
+        const allDeptIds = [parentDeptId, ...subDepts.map((d) => d.id)];
 
         // Get all employees in these departments
         const employees = await executeSimple(db, () =>
@@ -281,8 +281,8 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
             .select((u) => ({
               id: u.id,
               name: u.name,
-              deptId: u.department_id
-            }))
+              deptId: u.department_id,
+            })),
         );
 
         expect(employees).to.be.an("array");
@@ -298,7 +298,7 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
         from(dbContext, "departments")
           .where((d) => d.parent_dept_id === null)
           .select((d) => ({ id: d.id }))
-          .take(1)
+          .take(1),
       );
 
       if (rootDepts.length > 0) {
@@ -308,23 +308,24 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
         const subDepts = await executeSimple(db, () =>
           from(dbContext, "departments")
             .where((d) => d.parent_dept_id === rootId)
-            .select((d) => ({ id: d.id }))
+            .select((d) => ({ id: d.id })),
         );
 
-        const allDeptIds = [rootId, ...subDepts.map(d => d.id)];
+        const allDeptIds = [rootId, ...subDepts.map((d) => d.id)];
 
         // Calculate total salaries
         const salaryData = await executeSimple(db, () =>
           from(dbContext, "employees")
-            .where((e) => 
-              e.department_id !== null && 
-              allDeptIds.includes(e.department_id) &&
-              e.salary !== null
+            .where(
+              (e) =>
+                e.department_id !== null &&
+                allDeptIds.includes(e.department_id) &&
+                e.salary !== null,
             )
             .select((e) => ({
               salary: e.salary,
-              deptId: e.department_id
-            }))
+              deptId: e.department_id,
+            })),
         );
 
         const totalSalary = salaryData.reduce((sum, emp) => sum + (emp.salary ?? 0), 0);
@@ -339,25 +340,22 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
       const depth0 = await executeSimple(db, () =>
         from(dbContext, "categories")
           .where((c) => c.parent_id === null)
-          .count()
+          .count(),
       );
 
       // Depth 1: Direct children of root
       const rootIds = await executeSimple(db, () =>
         from(dbContext, "categories")
           .where((c) => c.parent_id === null)
-          .select((c) => ({ id: c.id }))
+          .select((c) => ({ id: c.id })),
       );
 
-      const rootIdList = rootIds.map(r => r.id);
+      const rootIdList = rootIds.map((r) => r.id);
 
       const depth1 = await executeSimple(db, () =>
         from(dbContext, "categories")
-          .where((c) => 
-            c.parent_id !== null && 
-            rootIdList.includes(c.parent_id)
-          )
-          .count()
+          .where((c) => c.parent_id !== null && rootIdList.includes(c.parent_id))
+          .count(),
       );
 
       expect(depth0).to.be.a("number");
@@ -372,9 +370,9 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
           .select((c) => ({
             id: c.id,
             parentId: c.parent_id,
-            name: c.name
+            name: c.name,
           }))
-          .take(1)
+          .take(1),
       );
 
       if (leafCategories.length > 0) {
@@ -389,8 +387,8 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
               .select((c) => ({
                 id: c.id,
                 parentId: c.parent_id,
-                name: c.name
-              }))
+                name: c.name,
+              })),
           );
 
           if (parent.length > 0) {
@@ -403,8 +401,8 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
                   .where((c) => c.id === parent[0]!.parentId)
                   .select((c) => ({
                     id: c.id,
-                    name: c.name
-                  }))
+                    name: c.name,
+                  })),
               );
 
               if (grandparent.length > 0) {
@@ -427,38 +425,34 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
         from(dbContext, "employees")
           .where((e) => e.manager_id !== null)
           .select((e) => ({ managerId: e.manager_id }))
-          .distinct()
+          .distinct(),
       );
 
-      const managerIdList = managerIds.map(m => m.managerId!);
+      const managerIdList = managerIds.map((m) => m.managerId!);
 
       // Average salary of managers
       const managerAvgSalary = await executeSimple(db, () =>
         from(dbContext, "employees")
-          .where((e) => 
-            managerIdList.includes(e.id) &&
-            e.salary !== null
-          )
-          .select((e) => ({ salary: e.salary }))
+          .where((e) => managerIdList.includes(e.id) && e.salary !== null)
+          .select((e) => ({ salary: e.salary })),
       );
 
       // Average salary of non-managers
       const nonManagerAvgSalary = await executeSimple(db, () =>
         from(dbContext, "employees")
-          .where((e) => 
-            !managerIdList.includes(e.id) &&
-            e.salary !== null
-          )
-          .select((e) => ({ salary: e.salary }))
+          .where((e) => !managerIdList.includes(e.id) && e.salary !== null)
+          .select((e) => ({ salary: e.salary })),
       );
 
       if (managerAvgSalary.length > 0) {
-        const avgMgr = managerAvgSalary.reduce((sum, e) => sum + e.salary!, 0) / managerAvgSalary.length;
+        const avgMgr =
+          managerAvgSalary.reduce((sum, e) => sum + e.salary!, 0) / managerAvgSalary.length;
         expect(avgMgr).to.be.a("number");
       }
 
       if (nonManagerAvgSalary.length > 0) {
-        const avgNonMgr = nonManagerAvgSalary.reduce((sum, e) => sum + e.salary!, 0) / nonManagerAvgSalary.length;
+        const avgNonMgr =
+          nonManagerAvgSalary.reduce((sum, e) => sum + e.salary!, 0) / nonManagerAvgSalary.length;
         expect(avgNonMgr).to.be.a("number");
       }
     });
@@ -468,27 +462,25 @@ describe("PostgreSQL Integration - Hierarchical Data", () => {
       const rootCategories = await executeSimple(db, () =>
         from(dbContext, "categories")
           .where((c) => c.parent_id === null)
-          .select((c) => ({ id: c.id, name: c.name }))
+          .select((c) => ({ id: c.id, name: c.name })),
       );
 
-      for (const root of rootCategories.slice(0, 2)) { // Test first 2 root categories
+      for (const root of rootCategories.slice(0, 2)) {
+        // Test first 2 root categories
         // Get all subcategories
         const subCategories = await executeSimple(db, () =>
           from(dbContext, "categories")
             .where((c) => c.parent_id === root.id)
-            .select((c) => ({ id: c.id }))
+            .select((c) => ({ id: c.id })),
         );
 
-        const allCategoryIds = [root.id, ...subCategories.map(s => s.id)];
+        const allCategoryIds = [root.id, ...subCategories.map((s) => s.id)];
 
         // Count products in all these categories
         const productCount = await executeSimple(db, () =>
           from(dbContext, "products")
-            .where((p) => 
-              p.category_id !== null &&
-              allCategoryIds.includes(p.category_id)
-            )
-            .count()
+            .where((p) => p.category_id !== null && allCategoryIds.includes(p.category_id))
+            .count(),
         );
 
         expect(productCount).to.be.a("number");

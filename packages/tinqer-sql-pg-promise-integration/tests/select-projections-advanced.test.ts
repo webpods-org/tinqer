@@ -30,9 +30,9 @@ describe("PostgreSQL Integration - Advanced SELECT Projections", () => {
             profitMargin: ((p.price - (p.cost ?? 0)) / p.price) * 100,
             totalInventoryValue: p.price * p.stock,
             totalInventoryCost: (p.cost ?? 0) * p.stock,
-            totalPotentialProfit: (p.price - (p.cost ?? 0)) * p.stock
+            totalPotentialProfit: (p.price - (p.cost ?? 0)) * p.stock,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -40,8 +40,15 @@ describe("PostgreSQL Integration - Advanced SELECT Projections", () => {
         expect(r.profit).to.equal(r.price - (r.cost ?? 0));
         // Note: stock isn't in projection, so can't verify totalInventoryValue calculation
         expect(r).to.have.all.keys(
-          "id", "name", "price", "cost", "profit",
-          "profitMargin", "totalInventoryValue", "totalInventoryCost", "totalPotentialProfit"
+          "id",
+          "name",
+          "price",
+          "cost",
+          "profit",
+          "profitMargin",
+          "totalInventoryValue",
+          "totalInventoryCost",
+          "totalPotentialProfit",
         );
       });
     });
@@ -53,11 +60,18 @@ describe("PostgreSQL Integration - Advanced SELECT Projections", () => {
             name: p.name,
             price: p.price,
             stock: p.stock,
-            availability: p.stock > 100 ? "High" : p.stock > 20 ? "Medium" : p.stock > 0 ? "Low" : "Out of Stock",
+            availability:
+              p.stock > 100
+                ? "High"
+                : p.stock > 20
+                  ? "Medium"
+                  : p.stock > 0
+                    ? "Low"
+                    : "Out of Stock",
             priceCategory: p.price >= 1000 ? "Premium" : p.price >= 100 ? "Standard" : "Budget",
-            isDiscountEligible: p.stock > 50 && p.price > 100
+            isDiscountEligible: p.stock > 50 && p.price > 100,
           }))
-          .take(15)
+          .take(15),
       );
 
       expect(results).to.be.an("array");
@@ -78,9 +92,9 @@ describe("PostgreSQL Integration - Advanced SELECT Projections", () => {
             department: u.department_id ?? -1,
             displayPhone: u.phone ?? "No phone",
             displayAddress: u.address ?? "No address",
-            hasCompleteProfile: u.phone !== null && u.address !== null && u.salary !== null
+            hasCompleteProfile: u.phone !== null && u.address !== null && u.salary !== null,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -103,25 +117,25 @@ describe("PostgreSQL Integration - Advanced SELECT Projections", () => {
             basic: {
               id: p.id,
               name: p.name,
-              sku: p.sku
+              sku: p.sku,
             },
             pricing: {
               current: p.price,
               cost: p.cost ?? 0,
-              margin: p.price - (p.cost ?? 0)
+              margin: p.price - (p.cost ?? 0),
             },
             inventory: {
               current: p.stock,
-              status: p.stock > 50 ? "Good" : "Low"
+              status: p.stock > 50 ? "Good" : "Low",
             },
             metadata: {
               category: p.category_id,
               featured: p.is_featured,
               rating: p.rating ?? 0,
-              reviews: p.review_count
-            }
+              reviews: p.review_count,
+            },
           }))
-          .take(5)
+          .take(5),
       );
 
       expect(results).to.be.an("array");
@@ -142,7 +156,7 @@ describe("PostgreSQL Integration - Advanced SELECT Projections", () => {
           .where((o) => o.user_id !== null)
           .groupBy((o) => ({
             userId: o.user_id,
-            status: o.status
+            status: o.status,
           }))
           .select((g) => ({
             customer: g.key.userId,
@@ -152,14 +166,14 @@ describe("PostgreSQL Integration - Advanced SELECT Projections", () => {
               total: g.sum((o) => o.total_amount),
               average: g.average((o) => o.total_amount),
               min: g.min((o) => o.total_amount),
-              max: g.max((o) => o.total_amount)
+              max: g.max((o) => o.total_amount),
             },
             taxMetrics: {
               totalTax: g.sum((o) => o.tax_amount),
-              avgTax: g.average((o) => o.tax_amount)
-            }
+              avgTax: g.average((o) => o.tax_amount),
+            },
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -189,11 +203,11 @@ describe("PostgreSQL Integration - Advanced SELECT Projections", () => {
               productListPrice: p.price,
               lineTotal: oi.quantity * oi.unit_price,
               discountAmount: (p.price - oi.unit_price) * oi.quantity,
-              discountPercent: ((p.price - oi.unit_price) / p.price) * 100
-            })
+              discountPercent: ((p.price - oi.unit_price) / p.price) * 100,
+            }),
           )
           .where((item) => item.discountAmount > 0)
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -211,24 +225,25 @@ describe("PostgreSQL Integration - Advanced SELECT Projections", () => {
       const params = {
         taxRate: 0.08,
         discountPercent: 10,
-        freeShippingThreshold: 100
+        freeShippingThreshold: 100,
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => pr.stock > 0)
-          .select((pr) => ({
-            id: pr.id,
-            name: pr.name,
-            originalPrice: pr.price,
-            discountedPrice: pr.price * (1 - p.discountPercent / 100),
-            savings: pr.price * (p.discountPercent / 100),
-            priceWithTax: pr.price * (1 + p.taxRate),
-            qualifiesForFreeShipping: pr.price >= p.freeShippingThreshold
-          }))
-          .take(10),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.stock > 0)
+            .select((pr) => ({
+              id: pr.id,
+              name: pr.name,
+              originalPrice: pr.price,
+              discountedPrice: pr.price * (1 - p.discountPercent / 100),
+              savings: pr.price * (p.discountPercent / 100),
+              priceWithTax: pr.price * (1 + p.taxRate),
+              qualifiesForFreeShipping: pr.price >= p.freeShippingThreshold,
+            }))
+            .take(10),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -258,10 +273,10 @@ describe("PostgreSQL Integration - Advanced SELECT Projections", () => {
               hasAddress: u.address !== null,
               hasCity: u.city !== null,
               hasCountry: u.country_id !== null,
-              isComplete: u.address !== null && u.city !== null && u.country_id !== null
-            }
+              isComplete: u.address !== null && u.city !== null && u.country_id !== null,
+            },
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -284,9 +299,9 @@ describe("PostgreSQL Integration - Advanced SELECT Projections", () => {
             needsReview: p.review_count === 0 || (p.rating !== null && p.rating < 3),
             isHighValue: p.price > 500 && p.stock < 50,
             shouldPromote: p.is_featured && p.stock > 100 && (p.rating ?? 0) >= 4,
-            inventoryAlert: p.stock < 10 || (p.stock < 50 && p.price > 1000)
+            inventoryAlert: p.stock < 10 || (p.stock < 50 && p.price > 1000),
           }))
-          .take(20)
+          .take(20),
       );
 
       expect(results).to.be.an("array");

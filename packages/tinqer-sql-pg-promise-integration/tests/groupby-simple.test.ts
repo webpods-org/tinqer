@@ -23,8 +23,8 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
           .groupBy((u) => u.department_id)
           .select((g) => ({
             departmentId: g.key,
-            userCount: g.count()
-          }))
+            userCount: g.count(),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -40,13 +40,13 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
           .groupBy((o) => o.status)
           .select((g) => ({
             status: g.key,
-            count: g.count()
+            count: g.count(),
           }))
-          .orderBy((r) => r.status)
+          .orderBy((r) => r.status),
       );
 
       expect(results).to.be.an("array");
-      const statuses = results.map(r => r.status);
+      const statuses = results.map((r) => r.status);
       expect(statuses).to.include.members(["pending", "processing", "shipped", "completed"]);
     });
 
@@ -56,8 +56,8 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
           .groupBy((u) => u.is_active)
           .select((g) => ({
             isActive: g.key,
-            count: g.count()
-          }))
+            count: g.count(),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -74,14 +74,14 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
           .groupBy((p) => p.category_id)
           .select((g) => ({
             categoryId: g.key,
-            productCount: g.count()
+            productCount: g.count(),
           }))
-          .orderBy((r) => r.categoryId ?? 999999)
+          .orderBy((r) => r.categoryId ?? 999999),
       );
 
       expect(results).to.be.an("array");
       // Should include NULL category group
-      const nullGroup = results.find(r => r.categoryId === null);
+      const nullGroup = results.find((r) => r.categoryId === null);
       if (nullGroup) {
         expect(nullGroup.productCount).to.be.greaterThan(0);
       }
@@ -96,8 +96,8 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
           .groupBy((p) => p.category_id)
           .select((g) => ({
             category: g.key,
-            expensiveProducts: g.count()
-          }))
+            expensiveProducts: g.count(),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -115,8 +115,8 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
           .select((g) => ({
             customerId: g.key,
             orderCount: g.count(),
-            totalSpent: g.sum((o) => o.total_amount)
-          }))
+            totalSpent: g.sum((o) => o.total_amount),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -133,10 +133,10 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
           .groupBy((o) => o.user_id)
           .select((g) => ({
             userId: g.key,
-            orderCount: g.count()
+            orderCount: g.count(),
           }))
           .orderByDescending((r) => r.orderCount)
-          .take(5)
+          .take(5),
       );
 
       expect(results).to.be.an("array");
@@ -155,9 +155,9 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
             orderId: g.key,
             itemCount: g.count(),
             totalQuantity: g.sum((oi) => oi.quantity),
-            totalAmount: g.sum((oi) => oi.quantity * oi.unit_price)
+            totalAmount: g.sum((oi) => oi.quantity * oi.unit_price),
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -175,8 +175,8 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
           .select((g) => ({
             categoryId: g.key,
             avgPrice: g.average((p) => p.price),
-            avgStock: g.average((p) => p.stock)
-          }))
+            avgStock: g.average((p) => p.stock),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -195,8 +195,8 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
             deptId: g.key,
             minSalary: g.min((e) => e.salary!),
             maxSalary: g.max((e) => e.salary!),
-            salaryRange: g.max((e) => e.salary!) - g.min((e) => e.salary!)
-          }))
+            salaryRange: g.max((e) => e.salary!) - g.min((e) => e.salary!),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -218,8 +218,8 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
             minOrder: g.min((o) => o.total_amount),
             maxOrder: g.max((o) => o.total_amount),
             totalTax: g.sum((o) => o.tax_amount),
-            totalShipping: g.sum((o) => o.shipping_amount)
-          }))
+            totalShipping: g.sum((o) => o.shipping_amount),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -238,9 +238,9 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
           .groupBy((u) => u.country_id)
           .select((g) => ({
             countryId: g.key,
-            userCount: g.count()
+            userCount: g.count(),
           }))
-          .orderBy((r) => r.countryId ?? 999999)
+          .orderBy((r) => r.countryId ?? 999999),
       );
 
       expect(results).to.be.an("array");
@@ -259,10 +259,10 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
           .select((g) => ({
             category: g.key,
             productCount: g.count(),
-            totalStock: g.sum((p) => p.stock)
+            totalStock: g.sum((p) => p.stock),
           }))
           .orderByDescending((r) => r.totalStock)
-          .take(5)
+          .take(5),
       );
 
       expect(results).to.be.an("array");
@@ -280,14 +280,14 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
         from(dbContext, "orders")
           .groupBy((o) => o.user_id)
           .select((g) => ({
-            customerId: g.key
+            customerId: g.key,
           }))
-          .distinct()
+          .distinct(),
       );
 
       expect(results).to.be.an("array");
       // Check uniqueness
-      const customerIds = results.map(r => r.customerId);
+      const customerIds = results.map((r) => r.customerId);
       const uniqueIds = [...new Set(customerIds)];
       expect(customerIds.length).to.equal(uniqueIds.length);
     });
@@ -297,20 +297,21 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
     it("should use parameters in WHERE before GROUP BY", async () => {
       const params = {
         minPrice: 100,
-        maxPrice: 1000
+        maxPrice: 1000,
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => pr.price >= p.minPrice && pr.price <= p.maxPrice)
-          .groupBy((pr) => pr.category_id)
-          .select((g) => ({
-            category: g.key,
-            count: g.count(),
-            avgPrice: g.average((pr) => pr.price)
-          })),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.price >= p.minPrice && pr.price <= p.maxPrice)
+            .groupBy((pr) => pr.category_id)
+            .select((g) => ({
+              category: g.key,
+              count: g.count(),
+              avgPrice: g.average((pr) => pr.price),
+            })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -328,13 +329,13 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
           .groupBy((u) => u.department_id)
           .select((g) => ({
             dept: g.key,
-            count: g.count()
-          }))
+            count: g.count(),
+          })),
       );
 
       expect(results).to.be.an("array");
       // Should have a group for NULL department
-      const nullGroup = results.find(g => g.dept === null);
+      const nullGroup = results.find((g) => g.dept === null);
       if (nullGroup) {
         expect(nullGroup.count).to.be.greaterThan(0);
       }
@@ -347,8 +348,8 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
           .select((g) => ({
             dept: g.key,
             avgSalary: g.average((u) => u.salary ?? 0),
-            countWithSalary: g.count()
-          }))
+            countWithSalary: g.count(),
+          })),
       );
 
       expect(results).to.be.an("array");

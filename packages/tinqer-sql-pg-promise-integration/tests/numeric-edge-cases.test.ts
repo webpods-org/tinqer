@@ -23,11 +23,12 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => pr.id < p.maxInt)
-          .select((pr) => ({ id: pr.id }))
-          .take(5),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.id < p.maxInt)
+            .select((pr) => ({ id: pr.id }))
+            .take(5),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -41,11 +42,12 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => pr.id > p.minInt)
-          .select((pr) => ({ id: pr.id }))
-          .take(5),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.id > p.minInt)
+            .select((pr) => ({ id: pr.id }))
+            .take(5),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -58,7 +60,7 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
           .where((p) => p.stock === 0)
-          .select((p) => ({ id: p.id, stock: p.stock }))
+          .select((p) => ({ id: p.id, stock: p.stock })),
       );
 
       expect(results).to.be.an("array");
@@ -71,15 +73,21 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
 
     it("should distinguish between 0, null, and undefined", async () => {
       const zeroCount = await executeSimple(db, () =>
-        from(dbContext, "products").where((p) => p.stock === 0).count()
+        from(dbContext, "products")
+          .where((p) => p.stock === 0)
+          .count(),
       );
 
       const nullCount = await executeSimple(db, () =>
-        from(dbContext, "products").where((p) => p.stock === null).count()
+        from(dbContext, "products")
+          .where((p) => p.stock === null)
+          .count(),
       );
 
       const notNullCount = await executeSimple(db, () =>
-        from(dbContext, "products").where((p) => p.stock !== null).count()
+        from(dbContext, "products")
+          .where((p) => p.stock !== null)
+          .count(),
       );
 
       expect(zeroCount).to.be.a("number");
@@ -93,15 +101,16 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
     it("should handle very small decimals", async () => {
       const params = {
         tiny: 0.000001,
-        epsilon: 0.0000001
+        epsilon: 0.0000001,
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => pr.price > p.tiny && pr.price < p.tiny * 10)
-          .select((pr) => ({ price: pr.price })),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.price > p.tiny && pr.price < p.tiny * 10)
+            .select((pr) => ({ price: pr.price })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -113,11 +122,12 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "orders")
-          .where((o) => o.total_amount < p.largeDecimal)
-          .select((o) => ({ total: o.total_amount }))
-          .take(10),
-        params
+        (p) =>
+          from(dbContext, "orders")
+            .where((o) => o.total_amount < p.largeDecimal)
+            .select((o) => ({ total: o.total_amount }))
+            .take(10),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -134,9 +144,9 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
             unitPrice: oi.unit_price,
             total: oi.quantity * oi.unit_price,
             // Test precision with division
-            avgPrice: (oi.quantity * oi.unit_price) / oi.quantity
+            avgPrice: (oi.quantity * oi.unit_price) / oi.quantity,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -155,9 +165,10 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
             shipping: o.shipping_amount,
             total: o.total_amount,
             // Verify total calculation
-            calculatedTotal: (o.total_amount - o.tax_amount - o.shipping_amount) + o.tax_amount + o.shipping_amount
+            calculatedTotal:
+              o.total_amount - o.tax_amount - o.shipping_amount + o.tax_amount + o.shipping_amount,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -173,16 +184,17 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => (pr.price - (pr.cost ?? pr.price * 2)) < p.negativeThreshold)
-          .select((pr) => ({
-            id: pr.id,
-            price: pr.price,
-            cost: pr.cost,
-            profit: pr.price - (pr.cost ?? pr.price * 2) // Could be negative
-          }))
-          .take(10),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.price - (pr.cost ?? pr.price * 2) < p.negativeThreshold)
+            .select((pr) => ({
+              id: pr.id,
+              price: pr.price,
+              cost: pr.cost,
+              profit: pr.price - (pr.cost ?? pr.price * 2), // Could be negative
+            }))
+            .take(10),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -195,10 +207,10 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
           .select((p) => ({
             id: p.id,
             price: p.price,
-            adjustedPrice: p.price - 1000 // Will be negative for cheaper products
+            adjustedPrice: p.price - 1000, // Will be negative for cheaper products
           }))
           .orderBy((p) => p.price - 1000)
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -217,9 +229,9 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
             id: p.id,
             stock: p.stock,
             // Protect against division by zero
-            avgValuePerItem: p.stock > 0 ? (p.price * p.stock) / p.stock : 0
+            avgValuePerItem: p.stock > 0 ? (p.price * p.stock) / p.stock : 0,
           }))
-          .take(20)
+          .take(20),
       );
 
       expect(results).to.be.an("array");
@@ -238,9 +250,9 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
             total: o.total_amount,
             tax: o.tax_amount,
             taxRate: (o.tax_amount / o.total_amount) * 100,
-            shippingRate: (o.shipping_amount / o.total_amount) * 100
+            shippingRate: (o.shipping_amount / o.total_amount) * 100,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -258,7 +270,7 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
           .where((p) => p.price > 99.99 && p.price < 100.01)
-          .select((p) => ({ id: p.id, price: p.price }))
+          .select((p) => ({ id: p.id, price: p.price })),
       );
 
       expect(results).to.be.an("array");
@@ -272,10 +284,11 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => pr.price === p.exactPrice)
-          .select((pr) => ({ id: pr.id, price: pr.price })),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.price === p.exactPrice)
+            .select((pr) => ({ id: pr.id, price: pr.price })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -296,9 +309,9 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
             price: p.price,
             totalValue: p.stock * p.price,
             // Large multiplication
-            projectedValue: p.stock * p.price * 1000000
+            projectedValue: p.stock * p.price * 1000000,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -319,9 +332,9 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
             id: p.id,
             price: p.price,
             microPrice: p.price / 1000000,
-            nanoPrice: p.price / 1000000000
+            nanoPrice: p.price / 1000000000,
           }))
-          .take(5)
+          .take(5),
       );
 
       expect(results).to.be.an("array");
@@ -341,8 +354,8 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
           .select((g) => ({
             status: g.key,
             totalRevenue: g.sum((o) => o.total_amount),
-            count: g.count()
-          }))
+            count: g.count(),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -359,8 +372,8 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
           .select((g) => ({
             deptId: g.key,
             avgAge: g.average((u) => u.age ?? 0),
-            avgSalary: g.average((u) => u.salary ?? 0)
-          }))
+            avgSalary: g.average((u) => u.salary ?? 0),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -379,8 +392,8 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
             categoryId: g.key,
             minPrice: g.min((p) => p.price),
             maxPrice: g.max((p) => p.price),
-            priceRange: g.max((p) => p.price) - g.min((p) => p.price)
-          }))
+            priceRange: g.max((p) => p.price) - g.min((p) => p.price),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -401,9 +414,9 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
             // Integer * decimal
             totalValue: p.stock * p.price,
             // Integer division resulting in decimal
-            avgItemValue: p.price / (p.stock > 0 ? p.stock : 1)
+            avgItemValue: p.price / (p.stock > 0 ? p.stock : 1),
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -417,19 +430,19 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
       const params = {
         intValue: 100,
         floatValue: 100.0,
-        decimalValue: 100.00
+        decimalValue: 100.0,
       };
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => 
-            pr.price === p.intValue ||
-            pr.price === p.floatValue ||
-            pr.price === p.decimalValue
-          )
-          .select((pr) => ({ id: pr.id, price: pr.price })),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where(
+              (pr) =>
+                pr.price === p.intValue || pr.price === p.floatValue || pr.price === p.decimalValue,
+            )
+            .select((pr) => ({ id: pr.id, price: pr.price })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -448,9 +461,9 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
             id: p.id,
             price: p.price,
             // Ensure no Infinity in calculations
-            safeCalculation: p.price * 1000 < 999999999999
+            safeCalculation: p.price * 1000 < 999999999999,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -463,11 +476,8 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
     it("should handle very close numeric comparisons", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
-          .where((p) => 
-            p.price > 99.98999999 &&
-            p.price < 99.99000001
-          )
-          .select((p) => ({ id: p.id, price: p.price }))
+          .where((p) => p.price > 99.98999999 && p.price < 99.99000001)
+          .select((p) => ({ id: p.id, price: p.price })),
       );
 
       expect(results).to.be.an("array");

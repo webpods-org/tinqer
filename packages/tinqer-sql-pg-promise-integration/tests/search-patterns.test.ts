@@ -23,7 +23,7 @@ describe("PostgreSQL Integration - Search Patterns", () => {
         from(dbContext, "products")
           .where((p) => p.name.startsWith("Product"))
           .select((p) => ({ id: p.id, name: p.name }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -37,10 +37,11 @@ describe("PostgreSQL Integration - Search Patterns", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "users")
-          .where((u) => u.name.startsWith(p.prefix))
-          .select((u) => ({ name: u.name })),
-        params
+        (p) =>
+          from(dbContext, "users")
+            .where((u) => u.name.startsWith(p.prefix))
+            .select((u) => ({ name: u.name })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -53,7 +54,7 @@ describe("PostgreSQL Integration - Search Patterns", () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "categories")
           .where((c) => c.name.startsWith("Category"))
-          .select((c) => ({ name: c.name }))
+          .select((c) => ({ name: c.name })),
       );
 
       expect(results).to.be.an("array");
@@ -68,10 +69,11 @@ describe("PostgreSQL Integration - Search Patterns", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => pr.name.startsWith(p.prefix))
-          .count(),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.name.startsWith(p.prefix))
+            .count(),
+        params,
       );
 
       // Empty prefix should match all non-null names
@@ -85,7 +87,7 @@ describe("PostgreSQL Integration - Search Patterns", () => {
         from(dbContext, "users")
           .where((u) => u.email.endsWith(".com"))
           .select((u) => ({ email: u.email }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -99,10 +101,11 @@ describe("PostgreSQL Integration - Search Patterns", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "users")
-          .where((u) => u.email.endsWith(p.suffix))
-          .select((u) => ({ email: u.email })),
-        params
+        (p) =>
+          from(dbContext, "users")
+            .where((u) => u.email.endsWith(p.suffix))
+            .select((u) => ({ email: u.email })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -115,7 +118,7 @@ describe("PostgreSQL Integration - Search Patterns", () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
           .where((p) => p.sku !== null && p.sku.endsWith("XL"))
-          .select((p) => ({ sku: p.sku }))
+          .select((p) => ({ sku: p.sku })),
       );
 
       expect(results).to.be.an("array");
@@ -130,9 +133,9 @@ describe("PostgreSQL Integration - Search Patterns", () => {
           .where((p) => p.description !== null && p.description.includes("quality"))
           .select((p) => ({
             id: p.id,
-            description: p.description
+            description: p.description,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -148,10 +151,11 @@ describe("PostgreSQL Integration - Search Patterns", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "users")
-          .where((u) => u.name.includes(p.searchTerm))
-          .select((u) => ({ name: u.name })),
-        params
+        (p) =>
+          from(dbContext, "users")
+            .where((u) => u.name.includes(p.searchTerm))
+            .select((u) => ({ name: u.name })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -165,10 +169,11 @@ describe("PostgreSQL Integration - Search Patterns", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "users")
-          .where((u) => u.email.includes(p.domain))
-          .select((u) => ({ email: u.email })),
-        params
+        (p) =>
+          from(dbContext, "users")
+            .where((u) => u.email.includes(p.domain))
+            .select((u) => ({ email: u.email })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -182,16 +187,17 @@ describe("PostgreSQL Integration - Search Patterns", () => {
     it("should combine multiple search patterns", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
-          .where((p) =>
-            p.name.startsWith("Product") &&
-            p.description !== null &&
-            p.description.includes("premium")
+          .where(
+            (p) =>
+              p.name.startsWith("Product") &&
+              p.description !== null &&
+              p.description.includes("premium"),
           )
           .select((p) => ({
             name: p.name,
-            description: p.description
+            description: p.description,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -206,12 +212,9 @@ describe("PostgreSQL Integration - Search Patterns", () => {
     it("should handle OR conditions with patterns", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "users")
-          .where((u) => 
-            u.email.endsWith(".com") ||
-            u.email.endsWith(".org")
-          )
+          .where((u) => u.email.endsWith(".com") || u.email.endsWith(".org"))
           .select((u) => ({ email: u.email }))
-          .take(20)
+          .take(20),
       );
 
       expect(results).to.be.an("array");
@@ -225,20 +228,22 @@ describe("PostgreSQL Integration - Search Patterns", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) =>
-            pr.name.includes(p.search) ||
-            (pr.description !== null && pr.description.includes(p.search)) ||
-            (pr.sku !== null && pr.sku.includes(p.search))
-          )
-          .select((pr) => ({ 
-            id: pr.id,
-            name: pr.name,
-            description: pr.description,
-            sku: pr.sku
-          }))
-          .take(10),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where(
+              (pr) =>
+                pr.name.includes(p.search) ||
+                (pr.description !== null && pr.description.includes(p.search)) ||
+                (pr.sku !== null && pr.sku.includes(p.search)),
+            )
+            .select((pr) => ({
+              id: pr.id,
+              name: pr.name,
+              description: pr.description,
+              sku: pr.sku,
+            }))
+            .take(10),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -260,10 +265,11 @@ describe("PostgreSQL Integration - Search Patterns", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => pr.description !== null && pr.description.includes(p.pattern))
-          .select((pr) => ({ description: pr.description })),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.description !== null && pr.description.includes(p.pattern))
+            .select((pr) => ({ description: pr.description })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -280,10 +286,11 @@ describe("PostgreSQL Integration - Search Patterns", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "products")
-          .where((pr) => pr.description !== null && pr.description.includes(p.pattern))
-          .select((pr) => ({ description: pr.description })),
-        params
+        (p) =>
+          from(dbContext, "products")
+            .where((pr) => pr.description !== null && pr.description.includes(p.pattern))
+            .select((pr) => ({ description: pr.description })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -294,11 +301,11 @@ describe("PostgreSQL Integration - Search Patterns", () => {
   describe("Pattern performance considerations", () => {
     it("should efficiently search with startsWith (uses index)", async () => {
       const startTime = Date.now();
-      
+
       const results = await executeSimple(db, () =>
         from(dbContext, "users")
           .where((u) => u.email.startsWith("user"))
-          .count()
+          .count(),
       );
 
       const endTime = Date.now();
@@ -312,7 +319,7 @@ describe("PostgreSQL Integration - Search Patterns", () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "users")
           .where((u) => u.email.includes("@"))
-          .count()
+          .count(),
       );
 
       expect(results).to.be.a("number");
@@ -324,11 +331,8 @@ describe("PostgreSQL Integration - Search Patterns", () => {
     it("should handle patterns on nullable columns", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "users")
-          .where((u) => 
-            u.phone !== null &&
-            u.phone.startsWith("+1")
-          )
-          .select((u) => ({ phone: u.phone }))
+          .where((u) => u.phone !== null && u.phone.startsWith("+1"))
+          .select((u) => ({ phone: u.phone })),
       );
 
       expect(results).to.be.an("array");
@@ -342,7 +346,7 @@ describe("PostgreSQL Integration - Search Patterns", () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
           .where((p) => p.description !== null && p.description.includes("test"))
-          .count()
+          .count(),
       );
 
       // Should not throw error on NULL descriptions
@@ -356,7 +360,7 @@ describe("PostgreSQL Integration - Search Patterns", () => {
         from(dbContext, "users")
           .where((u) => !u.email.endsWith(".com"))
           .select((u) => ({ email: u.email }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -368,15 +372,12 @@ describe("PostgreSQL Integration - Search Patterns", () => {
     it("should combine NOT with other conditions", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
-          .where((p) => 
-            p.price > 100 &&
-            !p.name.startsWith("Premium")
-          )
-          .select((p) => ({ 
-            name: p.name, 
-            price: p.price 
+          .where((p) => p.price > 100 && !p.name.startsWith("Premium"))
+          .select((p) => ({
+            name: p.name,
+            price: p.price,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
