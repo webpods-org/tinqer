@@ -22,7 +22,7 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
         from(dbContext, "users")
           .where((u) => u.is_active === true)
           .select((u) => ({ id: u.id, name: u.name, isActive: u.is_active }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -36,7 +36,7 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
         from(dbContext, "products")
           .where((p) => p.is_featured === false)
           .select((p) => ({ id: p.id, name: p.name, isFeatured: p.is_featured }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -50,7 +50,7 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
         from(dbContext, "users")
           .where((u) => !u.is_active)
           .select((u) => ({ id: u.id, isActive: u.is_active }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -65,7 +65,7 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
         from(dbContext, "users")
           .where((u) => u.is_active)
           .select((u) => ({ id: u.id, isActive: u.is_active }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -83,15 +83,15 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
           .select((p) => ({
             id: p.id,
             featured: p.is_featured,
-            hasStock: p.stock > 0
+            stock: p.stock,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
       results.forEach((product) => {
         expect(product.featured).to.equal(true);
-        expect(product.hasStock).to.equal(true);
+        expect(product.stock).to.be.greaterThan(0);
       });
     });
 
@@ -102,9 +102,9 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
           .select((u) => ({
             id: u.id,
             active: u.is_active,
-            role: u.role
+            role: u.role,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -116,18 +116,17 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
     it("should handle complex boolean logic", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
-          .where((p) =>
-            (p.is_featured === true && p.stock > 0) ||
-            (p.rating !== null && p.price < 100)
+          .where(
+            (p) => (p.is_featured === true && p.stock > 0) || (p.rating !== null && p.price < 100),
           )
           .select((p) => ({
             id: p.id,
             featured: p.is_featured,
             stock: p.stock,
             rating: p.rating,
-            price: p.price
+            price: p.price,
           }))
-          .take(20)
+          .take(20),
       );
 
       expect(results).to.be.an("array");
@@ -141,17 +140,14 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
     it("should handle nested boolean logic", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "users")
-          .where((u) =>
-            u.is_active === true &&
-            (u.salary !== null || u.role === "admin")
-          )
+          .where((u) => u.is_active === true && (u.salary !== null || u.role === "admin"))
           .select((u) => ({
             id: u.id,
             active: u.is_active,
             hasSalary: u.salary !== null,
-            role: u.role
+            role: u.role,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -167,12 +163,12 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
           .where((p) => (p.is_featured ?? false) === false)
-          .select((p) => ({ 
-            id: p.id, 
+          .select((p) => ({
+            id: p.id,
             featured: p.is_featured,
-            featuredOrFalse: p.is_featured ?? false
+            featuredOrFalse: p.is_featured ?? false,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -185,19 +181,19 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
       const falseResults = await executeSimple(db, () =>
         from(dbContext, "products")
           .where((p) => p.is_featured === false)
-          .count()
+          .count(),
       );
 
       const nullResults = await executeSimple(db, () =>
         from(dbContext, "products")
           .where((p) => p.is_featured === null)
-          .count()
+          .count(),
       );
 
       const notTrueResults = await executeSimple(db, () =>
         from(dbContext, "products")
           .where((p) => p.is_featured !== true)
-          .count()
+          .count(),
       );
 
       expect(falseResults).to.be.a("number");
@@ -213,10 +209,11 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "users")
-          .where((u) => u.is_active === p.isActive)
-          .select((u) => ({ id: u.id, active: u.is_active })),
-        params
+        (p) =>
+          from(dbContext, "users")
+            .where((u) => u.is_active === p.isActive)
+            .select((u) => ({ id: u.id, active: u.is_active })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -230,10 +227,11 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
 
       const results = await execute(
         db,
-        (p) => from(dbContext, "users")
-          .where((u) => (u.role === null) === p.hasRole)
-          .select((u) => ({ id: u.id, hasRole: u.role === null })),
-        params
+        (p) =>
+          from(dbContext, "users")
+            .where((u) => (u.role === null) === p.hasRole)
+            .select((u) => ({ id: u.id, hasRole: u.role === null })),
+        params,
       );
 
       expect(results).to.be.an("array");
@@ -251,9 +249,9 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
             id: p.id,
             isCheap: p.price < 50,
             isInStock: p.stock > 0,
-            isPopular: p.is_featured === true && p.stock > 10
+            isPopular: p.is_featured === true && p.stock > 10,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -271,9 +269,9 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
             id: u.id,
             isActive: u.is_active,
             isInactive: !u.is_active,
-            noSalary: u.salary === null
+            noSalary: u.salary === null,
           }))
-          .take(10)
+          .take(10),
       );
 
       expect(results).to.be.an("array");
@@ -291,8 +289,8 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
           .select((g) => ({
             isActive: g.key,
             count: g.count(),
-            avgAge: g.average((u) => u.age ?? 0)
-          }))
+            avgAge: g.average((u) => u.age ?? 0),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -308,14 +306,14 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
         from(dbContext, "products")
           .groupBy((p) => ({
             featured: p.is_featured,
-            hasStock: p.stock > 0
+            hasStock: p.stock > 0,
           }))
           .select((g) => ({
             isFeatured: g.key.featured,
             inStock: g.key.hasStock,
             productCount: g.count(),
-            avgPrice: g.average((p) => p.price)
-          }))
+            avgPrice: g.average((p) => p.price),
+          })),
       );
 
       expect(results).to.be.an("array");
@@ -334,12 +332,12 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
         from(dbContext, "users")
           .orderBy((u) => u.is_active)
           .thenBy((u) => u.name)
-          .select((u) => ({ 
-            id: u.id, 
-            name: u.name, 
-            active: u.is_active 
+          .select((u) => ({
+            id: u.id,
+            name: u.name,
+            active: u.is_active,
           }))
-          .take(20)
+          .take(20),
       );
 
       expect(results).to.be.an("array");
@@ -360,13 +358,13 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
         from(dbContext, "products")
           .orderByDescending((p) => p.stock > 0)
           .thenBy((p) => p.price)
-          .select((p) => ({ 
-            id: p.id, 
+          .select((p) => ({
+            id: p.id,
             price: p.price,
             stock: p.stock,
-            hasStock: p.stock > 0
+            hasStock: p.stock > 0,
           }))
-          .take(20)
+          .take(20),
       );
 
       expect(results).to.be.an("array");
@@ -388,7 +386,7 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
         from(dbContext, "users")
           .where((u) => !!u.is_active) // Double negation
           .select((u) => ({ id: u.id, active: u.is_active }))
-          .take(5)
+          .take(5),
       );
 
       expect(results).to.be.an("array");
@@ -402,13 +400,13 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "users")
           .where((u) => u.is_active === true)
-          .count()
+          .count(),
       );
 
       const results2 = await executeSimple(db, () =>
         from(dbContext, "users")
           .where((u) => u.is_active !== false)
-          .count()
+          .count(),
       );
 
       expect(results).to.be.a("number");
@@ -422,17 +420,17 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
         { active: true, hasRole: true },
         { active: true, hasRole: false },
         { active: false, hasRole: true },
-        { active: false, hasRole: false }
+        { active: false, hasRole: false },
       ];
 
       for (const combo of combinations) {
         const results = await executeSimple(db, () =>
           from(dbContext, "users")
-            .where((u) =>
-              u.is_active === combo.active &&
-              (combo.hasRole ? u.role !== null : u.role === null)
+            .where(
+              (u) =>
+                u.is_active === combo.active && (combo.hasRole ? u.role !== null : u.role === null),
             )
-            .count()
+            .count(),
         );
 
         expect(results).to.be.a("number");

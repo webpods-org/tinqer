@@ -26,10 +26,6 @@ export function query<TParams, TResult>(
   // Parse the query to get the operation tree and auto-params
   const parseResult = parseQuery(queryBuilder);
 
-  if (!parseResult) {
-    throw new Error("Failed to parse query");
-  }
-
   // Merge user params with auto-extracted params
   // User params take priority over auto-params to avoid collisions
   const mergedParams = { ...parseResult.autoParams, ...params };
@@ -78,10 +74,6 @@ export function toSql<T>(queryable: Queryable<T> | OrderedQueryable<T> | Termina
   // Parse and generate SQL
   const parseResult = parseQuery(queryBuilder);
 
-  if (!parseResult) {
-    throw new Error("Failed to parse query");
-  }
-
   // Generate SQL with auto-parameters
   const sql = generateSql(parseResult.operation, parseResult.autoParams);
 
@@ -126,9 +118,6 @@ export async function execute<
 
   // Check if this is a terminal operation that returns a single value
   const parseResult = parseQuery(queryBuilder);
-  if (!parseResult) {
-    throw new Error("Failed to parse query");
-  }
 
   const operationType = parseResult.operation.operationType;
 

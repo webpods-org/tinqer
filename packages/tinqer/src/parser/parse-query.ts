@@ -21,29 +21,29 @@ export interface ParseResult {
 /**
  * Parses a query builder function into a QueryOperation tree with auto-extracted parameters
  * @param queryBuilder The function that builds the query
- * @returns The parsed result containing operation tree and auto-params, or null if parsing fails
+ * @returns The parsed result containing operation tree and auto-params
+ * @throws Error if parsing fails
  */
 export function parseQuery<TParams, TResult>(
   queryBuilder: (
     params: TParams,
   ) => Queryable<TResult> | OrderedQueryable<TResult> | TerminalQuery<TResult>,
-): ParseResult | null {
-  try {
-    // 1. Convert function to string
-    const fnString = queryBuilder.toString();
+): ParseResult {
+  // 1. Convert function to string
+  const fnString = queryBuilder.toString();
 
-    // 2. Parse with OXC to get AST
-    const ast = parseJavaScript(fnString);
-    if (!ast) {
-      return null;
-    }
-
-    // 3. Convert AST to QueryOperation tree with auto-params
-    const result = convertAstToQueryOperationWithParams(ast);
-
-    return result;
-  } catch (error) {
-    console.error("Failed to parse query:", error);
-    return null;
+  // 2. Parse with OXC to get AST
+  const ast = parseJavaScript(fnString);
+  if (!ast) {
+    throw new Error("Failed to parse JavaScript: Invalid syntax in query builder function");
   }
+
+  // 3. Convert AST to QueryOperation tree with auto-params
+  const result = convertAstToQueryOperationWithParams(ast);
+
+  if (!result) {
+    throw new Error("Failed to convert query: Unable to process query operations");
+  }
+
+  return result;
 }

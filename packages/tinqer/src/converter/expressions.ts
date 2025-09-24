@@ -926,11 +926,67 @@ export function convertObjectExpression(
       const key = (prop.key as Identifier).name;
       const value = convertAstToExpression(prop.value, context);
       if (!value) return null;
+
+      // Check if we're in a SELECT projection and the value is an expression (not a simple column/constant)
+      if (context.inSelectProjection) {
+        // Disallow comparison and other complex expressions in SELECT
+        // Exception: Allow aggregate functions when after GROUP BY
+        const isAfterGroupBy = context.groupingParams && context.groupingParams.size > 0;
+        const isAggregate = value.type === "aggregate";
+        const isSimpleValue = value.type === "column" || value.type === "constant" || value.type === "param";
+        const isArithmetic = value.type === "arithmetic";
+        const isCoalesce = value.type === "coalesce";
+
+        if (!isSimpleValue && !isArithmetic && !isCoalesce && !(isAfterGroupBy && isAggregate)) {
+          if (value.type === "comparison") {
+            throw new Error(
+              `Comparison expressions are not supported in SELECT projections. ` +
+              `Property '${key}' contains a comparison expression (${prop.value.type}). ` +
+              `Only simple column references, constants, arithmetic expressions, and aggregates (after GROUP BY) are allowed.`
+            );
+          } else if (value.type === "logical") {
+            throw new Error(
+              `Logical expressions are not supported in SELECT projections. ` +
+              `Property '${key}' contains a logical expression. ` +
+              `Only simple column references, constants, arithmetic expressions, and aggregates (after GROUP BY) are allowed.`
+            );
+          }
+        }
+      }
+
       properties[key] = value;
     } else if (prop.key && (prop.key.type === "Literal" || prop.key.type === "StringLiteral")) {
       const key = String((prop.key as Literal | StringLiteral).value);
       const value = convertAstToExpression(prop.value, context);
       if (!value) return null;
+
+      // Check if we're in a SELECT projection and the value is an expression (not a simple column/constant)
+      if (context.inSelectProjection) {
+        // Disallow comparison and other complex expressions in SELECT
+        // Exception: Allow aggregate functions when after GROUP BY
+        const isAfterGroupBy = context.groupingParams && context.groupingParams.size > 0;
+        const isAggregate = value.type === "aggregate";
+        const isSimpleValue = value.type === "column" || value.type === "constant" || value.type === "param";
+        const isArithmetic = value.type === "arithmetic";
+        const isCoalesce = value.type === "coalesce";
+
+        if (!isSimpleValue && !isArithmetic && !isCoalesce && !(isAfterGroupBy && isAggregate)) {
+          if (value.type === "comparison") {
+            throw new Error(
+              `Comparison expressions are not supported in SELECT projections. ` +
+              `Property '${key}' contains a comparison expression. ` +
+              `Only simple column references, constants, arithmetic expressions, and aggregates (after GROUP BY) are allowed.`
+            );
+          } else if (value.type === "logical") {
+            throw new Error(
+              `Logical expressions are not supported in SELECT projections. ` +
+              `Property '${key}' contains a logical expression. ` +
+              `Only simple column references, constants, arithmetic expressions, and aggregates (after GROUP BY) are allowed.`
+            );
+          }
+        }
+      }
+
       properties[key] = value;
     }
   }
