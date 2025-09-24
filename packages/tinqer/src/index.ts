@@ -23,54 +23,63 @@ export type { IGrouping } from "./linq/igrouping.js";
 
 export type {
   Expression,
-  ValueExpression,
-  BooleanExpression,
-  ObjectExpression,
-  ArrayExpression,
-
-  // Value expressions
-  ColumnExpression,
+  RowExpression,
+  GroupExpression,
   ConstantExpression,
-  ParameterExpression,
-  ArithmeticExpression,
-  ConcatExpression,
-  StringMethodExpression,
-  CaseExpression,
-  CoalesceExpression,
-  CastExpression,
+
+  // Row-level expressions
+  RowParameterExpression,
+  RowMemberExpression,
+  RowBinaryExpression,
+  RowUnaryExpression,
+  RowConditionalExpression,
+  RowCallExpression,
+  RowArrayExpression,
+  RowObjectExpression,
+  RowCastExpression,
+  RowCoalesceExpression,
+  RowInExpression,
+  RowBetweenExpression,
+  RowIsNullExpression,
+  RowLikeExpression,
+  RowRegexExpression,
+  RowExistsExpression,
+
+  // Group-level expressions
+  GroupParameterExpression,
+  GroupKeyExpression,
   AggregateExpression,
+  GroupMemberExpression,
+  GroupBinaryExpression,
+  GroupUnaryExpression,
+  GroupConditionalExpression,
+  GroupCallExpression,
+  GroupArrayExpression,
+  GroupObjectExpression,
+  GroupCastExpression,
+  GroupCoalesceExpression,
+  GroupInExpression,
+  GroupBetweenExpression,
+  GroupIsNullExpression,
+  GroupLikeExpression,
+  GroupRegexExpression,
+  GroupExistsExpression,
 
-  // Boolean expressions
-  ComparisonExpression,
-  LogicalExpression,
-  NotExpression,
-  BooleanConstantExpression,
-  BooleanColumnExpression,
-  BooleanParameterExpression,
-  BooleanMethodExpression,
-  InExpression,
-  BetweenExpression,
-  IsNullExpression,
-  ExistsExpression,
-  LikeExpression,
-  RegexExpression,
-
-  // Complex expressions
-  MemberAccessExpression,
-  MethodCallExpression,
-  ConditionalExpression,
-  FunctionCallExpression,
-  NewExpression,
-  LambdaExpression,
-  LambdaParameter,
+  // Operators
+  BinaryOperator,
+  UnaryOperator,
+  ParameterOrigin,
 } from "./expressions/expression.js";
 
 // Type guards
 export {
-  isValueExpression,
-  isBooleanExpression,
-  isObjectExpression,
-  isArrayExpression,
+  isRowExpression,
+  isGroupExpression,
+  isConstant,
+  isRowParameter,
+  isGroupParameter,
+  isAggregate,
+  isGroupKey,
 } from "./expressions/expression.js";
 
 // ==================== Query Tree Types ====================
@@ -78,57 +87,34 @@ export {
 
 export type {
   QueryOperation,
-  ParamRef,
-
-  // Chainable operations
-  FromOperation,
+  BaseOperation,
+  TableOperation,
   WhereOperation,
   SelectOperation,
-  JoinOperation,
-  ResultShape,
-  ShapeNode,
-  ColumnShapeNode,
-  ObjectShapeNode,
-  ReferenceShapeNode,
-  ArrayShapeNode,
   GroupByOperation,
   OrderByOperation,
-  ThenByOperation,
+  OrderByDescendingOperation,
+  JoinOperation,
   DistinctOperation,
-  TakeOperation,
   SkipOperation,
-  ReverseOperation,
-
-  // Terminal operations
-  FirstOperation,
-  FirstOrDefaultOperation,
-  SingleOperation,
-  SingleOrDefaultOperation,
-  LastOperation,
-  LastOrDefaultOperation,
-  ContainsOperation,
-  AnyOperation,
-  AllOperation,
-  CountOperation,
-  SumOperation,
-  AverageOperation,
-  MinOperation,
-  MaxOperation,
-  ToArrayOperation,
-
-  // Union types
-  ChainableOperation,
-  TerminalOperation,
-  AnyQueryOperation,
+  TakeOperation,
 } from "./query-tree/operations.js";
+
+// ==================== Converter API ====================
+
+export {
+  convertLambdaToExpression,
+  convertQueryOperation,
+  createRegistry,
+  addParameter,
+  getParametersObject,
+  type ConversionContext,
+  type ConversionResult,
+  type ParameterRegistry,
+} from "./converter/converter.js";
 
 // ==================== Parser API ====================
 
 export { parseQuery } from "./parser/parse-query.js";
 export type { ParseResult } from "./parser/parse-query.js";
 export { parseJavaScript } from "./parser/oxc-parser.js";
-export {
-  convertAstToExpression,
-  convertAstToQueryOperation,
-  type ConversionContext,
-} from "./converter/ast-converter.js";

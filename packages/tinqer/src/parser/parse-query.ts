@@ -4,10 +4,8 @@
 
 import type { QueryOperation } from "../query-tree/operations.js";
 import { parseJavaScript } from "./oxc-parser.js";
-import { convertAstToQueryOperationWithParams } from "../converter/ast-converter.js";
 import type { Queryable, OrderedQueryable } from "../linq/queryable.js";
 import type { TerminalQuery } from "../linq/terminal-query.js";
-import type { AutoParamInfo } from "../converter/converter-utils.js";
 
 /**
  * Result of parsing a query, including auto-extracted parameters
@@ -15,7 +13,6 @@ import type { AutoParamInfo } from "../converter/converter-utils.js";
 export interface ParseResult {
   operation: QueryOperation;
   autoParams: Record<string, string | number | boolean | null>;
-  autoParamInfos?: Record<string, AutoParamInfo>; // Enhanced field context information
 }
 
 /**
@@ -38,12 +35,7 @@ export function parseQuery<TParams, TResult>(
     throw new Error("Failed to parse JavaScript: Invalid syntax in query builder function");
   }
 
-  // 3. Convert AST to QueryOperation tree with auto-params
-  const result = convertAstToQueryOperationWithParams(ast);
-
-  if (!result) {
-    throw new Error("Failed to convert query: Unable to process query operations");
-  }
-
-  return result;
+  // 3. For now, return a placeholder - this needs to be reimplemented
+  // with the new converter architecture
+  throw new Error("parseQuery needs to be reimplemented with new converter architecture");
 }

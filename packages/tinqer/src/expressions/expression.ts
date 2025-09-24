@@ -1,422 +1,319 @@
-/**
- * Expression Types for Tinqer Query System
- *
- * Precise type hierarchy for expressions that evaluate to different types.
- * These are used by the parser to represent parsed lambda expressions.
- */
+import type { QueryOperation } from "../query-tree/operations.js";
 
-// ==================== Value Expressions ====================
+// ==================== Parameter Origin ====================
 
-/**
- * Column reference - references a table column
- */
-export interface ColumnExpression {
-  type: "column";
-  name: string;
-  table?: string; // Optional table alias for joins
-}
+export type ParameterOrigin =
+  | { type: "table"; ref: string }
+  | { type: "lambda"; ref: string };
 
-/**
- * Constant value - literal values
- */
+// ==================== Constants (work in both contexts) ====================
+
 export interface ConstantExpression {
   type: "constant";
   value: unknown;
-  valueType?: "string" | "number" | "boolean" | "null" | "undefined";
 }
 
-/**
- * Parameter reference - references external query parameters
- */
-export interface ParameterExpression {
-  type: "param";
-  param: string; // Parameter name (e.g., "p")
-  property?: string; // Property path (e.g., "minAge")
-  index?: number; // Array index (e.g., roles[0])
+// ==================== Row-Level Expressions (before GROUP BY) ====================
+
+export interface RowParameterExpression {
+  type: "row-parameter";
+  name: string;
+  origin: ParameterOrigin;
 }
 
-/**
- * Arithmetic expression - mathematical operations
- */
-export interface ArithmeticExpression {
-  type: "arithmetic";
-  operator: "+" | "-" | "*" | "/" | "%";
-  left: ValueExpression;
-  right: ValueExpression;
+export interface RowMemberExpression {
+  type: "row-member";
+  object: RowExpression;
+  property: string;
+  optional?: boolean;
 }
 
-/**
- * String concatenation
- */
-export interface ConcatExpression {
-  type: "concat";
-  left: ValueExpression;
-  right: ValueExpression;
+export interface RowBinaryExpression {
+  type: "row-binary";
+  operator: BinaryOperator;
+  left: RowExpression;
+  right: RowExpression;
 }
 
-/**
- * String method calls
- */
-export interface StringMethodExpression {
-  type: "stringMethod";
-  object: ValueExpression;
-  method: "toLowerCase" | "toUpperCase";
-  arguments?: ValueExpression[];
+export interface RowUnaryExpression {
+  type: "row-unary";
+  operator: UnaryOperator;
+  argument: RowExpression;
 }
 
-/**
- * CASE expression (SQL CASE WHEN)
- */
-export interface CaseExpression {
-  type: "case";
-  conditions: Array<{
-    when: BooleanExpression;
-    then: ValueExpression;
-  }>;
-  else?: ValueExpression;
+export interface RowConditionalExpression {
+  type: "row-conditional";
+  test: RowExpression;
+  consequent: RowExpression;
+  alternate: RowExpression;
 }
 
-/**
- * Coalesce expression (COALESCE / ??)
- */
-export interface CoalesceExpression {
-  type: "coalesce";
-  expressions: ValueExpression[];
+export interface RowCallExpression {
+  type: "row-call";
+  function: string;
+  arguments: RowExpression[];
 }
 
-/**
- * Cast expression - type conversion
- */
-export interface CastExpression {
-  type: "cast";
-  expression: ValueExpression;
+export interface RowArrayExpression {
+  type: "row-array";
+  elements: RowExpression[];
+}
+
+export interface RowObjectExpression {
+  type: "row-object";
+  properties: Array<{ key: string; value: RowExpression }>;
+}
+
+export interface RowCastExpression {
+  type: "row-cast";
+  expression: RowExpression;
   targetType: "string" | "number" | "boolean" | "date";
 }
 
-/**
- * Aggregate expression - for GROUP BY aggregations
- * Follows C# LINQ IGrouping pattern
- */
-export interface AggregateExpression {
-  type: "aggregate";
-  function: "count" | "sum" | "avg" | "min" | "max";
-  expression?: ValueExpression; // Optional - COUNT(*) doesn't need one
+export interface RowCoalesceExpression {
+  type: "row-coalesce";
+  expressions: RowExpression[];
 }
 
-/**
- * Union type for all value-producing expressions
- */
-export type ValueExpression =
-  | ColumnExpression
-  | ConstantExpression
-  | ParameterExpression
-  | ArithmeticExpression
-  | ConcatExpression
-  | StringMethodExpression
-  | CaseExpression
-  | CoalesceExpression
-  | CastExpression
-  | AggregateExpression;
-
-// ==================== Boolean Expressions ====================
-
-/**
- * Comparison expression - binary comparisons
- */
-export interface ComparisonExpression {
-  type: "comparison";
-  operator: "==" | "!=" | ">" | ">=" | "<" | "<=";
-  left: ValueExpression;
-  right: ValueExpression;
+export interface RowInExpression {
+  type: "row-in";
+  value: RowExpression;
+  list: RowExpression[] | RowArrayExpression;
 }
 
-/**
- * Logical expression - combines boolean expressions
- */
-export interface LogicalExpression {
-  type: "logical";
-  operator: "and" | "or";
-  left: BooleanExpression;
-  right: BooleanExpression;
+export interface RowBetweenExpression {
+  type: "row-between";
+  value: RowExpression;
+  lower: RowExpression;
+  upper: RowExpression;
 }
 
-/**
- * NOT expression - negation
- */
-export interface NotExpression {
-  type: "not";
-  expression: BooleanExpression;
-}
-
-/**
- * Boolean constant
- */
-export interface BooleanConstantExpression {
-  type: "booleanConstant";
-  value: boolean;
-}
-
-/**
- * Boolean column reference (for columns that are boolean)
- */
-export interface BooleanColumnExpression {
-  type: "booleanColumn";
-  name: string;
-  table?: string;
-}
-
-/**
- * Boolean parameter reference
- */
-export interface BooleanParameterExpression {
-  type: "booleanParam";
-  param: string;
-  property?: string;
-}
-
-/**
- * String comparison methods that return boolean
- */
-export interface BooleanMethodExpression {
-  type: "booleanMethod";
-  object: ValueExpression;
-  method: "startsWith" | "endsWith" | "includes" | "contains";
-  arguments: ValueExpression[];
-}
-
-/**
- * IN expression - value in list
- */
-export interface InExpression {
-  type: "in";
-  value: ValueExpression;
-  list: ValueExpression[] | ArrayExpression | ParameterExpression;
-}
-
-/**
- * BETWEEN expression
- */
-export interface BetweenExpression {
-  type: "between";
-  value: ValueExpression;
-  lower: ValueExpression;
-  upper: ValueExpression;
-}
-
-/**
- * IS NULL / IS NOT NULL
- */
-export interface IsNullExpression {
-  type: "isNull";
-  expression: ValueExpression;
+export interface RowIsNullExpression {
+  type: "row-is-null";
+  expression: RowExpression;
   negated?: boolean;
 }
 
-/**
- * EXISTS expression (for subqueries)
- */
-export interface ExistsExpression {
-  type: "exists";
-  subquery: QueryOperation; // From query-operations.ts
-  negated?: boolean;
-}
-
-/**
- * LIKE expression for pattern matching
- */
-export interface LikeExpression {
-  type: "like";
-  value: ValueExpression;
-  pattern: ValueExpression;
+export interface RowLikeExpression {
+  type: "row-like";
+  value: RowExpression;
+  pattern: RowExpression;
   escape?: string;
 }
 
-/**
- * Regular expression match
- */
-export interface RegexExpression {
-  type: "regex";
-  value: ValueExpression;
-  pattern: ValueExpression;
+export interface RowRegexExpression {
+  type: "row-regex";
+  value: RowExpression;
+  pattern: RowExpression;
   flags?: string;
 }
 
-/**
- * Union type for all boolean-producing expressions
- */
-export type BooleanExpression =
-  | ComparisonExpression
-  | LogicalExpression
-  | NotExpression
-  | BooleanConstantExpression
-  | BooleanColumnExpression
-  | BooleanParameterExpression
-  | BooleanMethodExpression
-  | InExpression
-  | BetweenExpression
-  | IsNullExpression
-  | ExistsExpression
-  | LikeExpression
-  | RegexExpression;
-
-// ==================== Complex Expressions ====================
-
-/**
- * Object literal expression (for SELECT projections)
- */
-export interface ObjectExpression {
-  type: "object";
-  properties: Record<string, Expression>;
+export interface RowExistsExpression {
+  type: "row-exists";
+  subquery: QueryOperation;
+  negated?: boolean;
 }
 
-/**
- * Array expression
- */
-export interface ArrayExpression {
-  type: "array";
-  elements: Expression[];
-}
+export type RowExpression =
+  | RowParameterExpression
+  | RowMemberExpression
+  | RowBinaryExpression
+  | RowUnaryExpression
+  | RowConditionalExpression
+  | RowCallExpression
+  | RowArrayExpression
+  | RowObjectExpression
+  | RowCastExpression
+  | RowCoalesceExpression
+  | RowInExpression
+  | RowBetweenExpression
+  | RowIsNullExpression
+  | RowLikeExpression
+  | RowRegexExpression
+  | RowExistsExpression
+  | ConstantExpression;
 
-/**
- * Member access expression (before simplification)
- * Used during parsing before we determine if it's a column
- */
-export interface MemberAccessExpression {
-  type: "memberAccess";
-  object: Expression;
-  member: string;
-}
+// ==================== Group-Level Expressions (after GROUP BY) ====================
 
-/**
- * Method call expression (general, before categorization)
- */
-export interface MethodCallExpression {
-  type: "methodCall";
-  object: Expression;
-  method: string;
-  arguments: Expression[];
-}
-
-/**
- * Conditional expression (ternary)
- */
-export interface ConditionalExpression {
-  type: "conditional";
-  condition: BooleanExpression;
-  then: Expression;
-  else: Expression;
-}
-
-/**
- * Function call expression
- */
-export interface FunctionCallExpression {
-  type: "functionCall";
+export interface GroupParameterExpression {
+  type: "group-parameter";
   name: string;
-  arguments: Expression[];
+  origin: ParameterOrigin;
 }
 
-/**
- * New expression (constructor call)
- */
-export interface NewExpression {
-  type: "new";
-  constructor: string;
-  arguments: Expression[];
+export interface GroupKeyExpression {
+  type: "group-key";
+  keyExpression: RowExpression;
+  origin: ParameterOrigin;
 }
 
-// ==================== Lambda Expression ====================
-
-/**
- * Lambda parameter
- */
-export interface LambdaParameter {
-  name: string;
-  type?: string; // Optional type annotation
+export interface AggregateExpression {
+  type: "aggregate";
+  function: "sum" | "count" | "avg" | "min" | "max" | "array_agg" | "string_agg";
+  expression: RowExpression | null;
+  distinct?: boolean;
+  separator?: string;
+  origin: ParameterOrigin;
 }
 
-/**
- * Lambda expression (arrow function)
- */
-export interface LambdaExpression {
-  type: "lambda";
-  parameters: LambdaParameter[];
-  body: Expression;
+export interface GroupMemberExpression {
+  type: "group-member";
+  object: GroupExpression;
+  property: string;
+  optional?: boolean;
 }
 
-// ==================== Base Expression Type ====================
+export interface GroupBinaryExpression {
+  type: "group-binary";
+  operator: BinaryOperator;
+  left: GroupExpression;
+  right: GroupExpression;
+}
 
-/**
- * Import QueryOperation for EXISTS subqueries
- */
-import type { QueryOperation } from "../query-tree/operations.js";
+export interface GroupUnaryExpression {
+  type: "group-unary";
+  operator: UnaryOperator;
+  argument: GroupExpression;
+}
 
-/**
- * Union type for all expressions
- */
-export type Expression =
-  | ValueExpression
-  | BooleanExpression
-  | ObjectExpression
-  | ArrayExpression
-  | MemberAccessExpression
-  | MethodCallExpression
-  | ConditionalExpression
-  | FunctionCallExpression
-  | NewExpression
-  | LambdaExpression;
+export interface GroupConditionalExpression {
+  type: "group-conditional";
+  test: GroupExpression;
+  consequent: GroupExpression;
+  alternate: GroupExpression;
+}
+
+export interface GroupCallExpression {
+  type: "group-call";
+  function: string;
+  arguments: GroupExpression[];
+}
+
+export interface GroupArrayExpression {
+  type: "group-array";
+  elements: GroupExpression[];
+}
+
+export interface GroupObjectExpression {
+  type: "group-object";
+  properties: Array<{ key: string; value: GroupExpression }>;
+}
+
+export interface GroupCastExpression {
+  type: "group-cast";
+  expression: GroupExpression;
+  targetType: "string" | "number" | "boolean" | "date";
+}
+
+export interface GroupCoalesceExpression {
+  type: "group-coalesce";
+  expressions: GroupExpression[];
+}
+
+export interface GroupInExpression {
+  type: "group-in";
+  value: GroupExpression;
+  list: GroupExpression[] | GroupArrayExpression;
+}
+
+export interface GroupBetweenExpression {
+  type: "group-between";
+  value: GroupExpression;
+  lower: GroupExpression;
+  upper: GroupExpression;
+}
+
+export interface GroupIsNullExpression {
+  type: "group-is-null";
+  expression: GroupExpression;
+  negated?: boolean;
+}
+
+export interface GroupLikeExpression {
+  type: "group-like";
+  value: GroupExpression;
+  pattern: GroupExpression;
+  escape?: string;
+}
+
+export interface GroupRegexExpression {
+  type: "group-regex";
+  value: GroupExpression;
+  pattern: GroupExpression;
+  flags?: string;
+}
+
+export interface GroupExistsExpression {
+  type: "group-exists";
+  subquery: QueryOperation;
+  negated?: boolean;
+}
+
+export type GroupExpression =
+  | GroupParameterExpression
+  | GroupKeyExpression
+  | AggregateExpression
+  | GroupMemberExpression
+  | GroupBinaryExpression
+  | GroupUnaryExpression
+  | GroupConditionalExpression
+  | GroupCallExpression
+  | GroupArrayExpression
+  | GroupObjectExpression
+  | GroupCastExpression
+  | GroupCoalesceExpression
+  | GroupInExpression
+  | GroupBetweenExpression
+  | GroupIsNullExpression
+  | GroupLikeExpression
+  | GroupRegexExpression
+  | GroupExistsExpression
+  | ConstantExpression;
+
+// ==================== Union Type ====================
+
+export type Expression = RowExpression | GroupExpression;
+
+// ==================== Operators ====================
+
+export type BinaryOperator =
+  | "==" | "!=" | "<" | "<=" | ">" | ">="
+  | "+" | "-" | "*" | "/" | "%"
+  | "&&" | "||"
+  | "??"
+  | "in" | "includes";
+
+export type UnaryOperator = "!" | "-" | "+";
 
 // ==================== Type Guards ====================
 
-/**
- * Type guard for value expressions
- */
-export function isValueExpression(expr: Expression): expr is ValueExpression {
-  return [
-    "column",
-    "constant",
-    "param",
-    "arithmetic",
-    "concat",
-    "stringMethod",
-    "case",
-    "coalesce",
-    "cast",
-    "aggregate",
-  ].includes(expr.type);
+export function isRowExpression(expr: Expression): expr is RowExpression {
+  return expr.type.startsWith("row-") || expr.type === "constant";
 }
 
-/**
- * Type guard for boolean expressions
- */
-export function isBooleanExpression(expr: Expression): expr is BooleanExpression {
-  return [
-    "comparison",
-    "logical",
-    "not",
-    "booleanConstant",
-    "booleanColumn",
-    "booleanParam",
-    "booleanMethod",
-    "in",
-    "between",
-    "isNull",
-    "exists",
-    "like",
-    "regex",
-  ].includes(expr.type);
+export function isGroupExpression(expr: Expression): expr is GroupExpression {
+  return expr.type.startsWith("group-") ||
+         expr.type === "aggregate" ||
+         expr.type === "group-key" ||
+         expr.type === "constant";
 }
 
-/**
- * Type guard for object expressions
- */
-export function isObjectExpression(expr: Expression): expr is ObjectExpression {
-  return expr.type === "object";
+export function isConstant(expr: Expression): expr is ConstantExpression {
+  return expr.type === "constant";
 }
 
-/**
- * Type guard for array expressions
- */
-export function isArrayExpression(expr: Expression): expr is ArrayExpression {
-  return expr.type === "array";
+export function isRowParameter(expr: Expression): expr is RowParameterExpression {
+  return expr.type === "row-parameter";
+}
+
+export function isGroupParameter(expr: Expression): expr is GroupParameterExpression {
+  return expr.type === "group-parameter";
+}
+
+export function isAggregate(expr: Expression): expr is AggregateExpression {
+  return expr.type === "aggregate";
+}
+
+export function isGroupKey(expr: Expression): expr is GroupKeyExpression {
+  return expr.type === "group-key";
 }

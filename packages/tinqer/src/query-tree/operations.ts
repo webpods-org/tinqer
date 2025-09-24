@@ -1,449 +1,143 @@
 /**
- * Simplified Query Operation Types for Runtime Parsing
+ * Query Operation Types for Tinqer
  *
- * These types represent the parsed expression tree without complex generics.
- * They are used by the parser to build query structures from lambda expressions.
+ * These types represent the query operations that can be performed.
+ * They are simpler than before and work with the new expression system.
  */
 
-import type {
-  Expression,
-  BooleanExpression,
-  ValueExpression,
-  ObjectExpression,
-} from "../expressions/expression.js";
-
-/**
- * Parameter reference for external parameters
- */
-export interface ParamRef {
-  type: "param";
-  param: string;
-  property?: string;
-}
+import type { Expression, RowExpression, GroupExpression } from "../expressions/expression.js";
+import type { ParameterRegistry } from "../converter/parameter-registry.js";
 
 /**
  * Base query operation
  */
-export interface QueryOperation {
-  type: "queryOperation";
-  operationType: string;
+export interface BaseOperation {
+  type: string;
 }
 
 /**
- * FROM operation - the root of all query chains
+ * TABLE operation - source of queries
  */
-export interface FromOperation extends QueryOperation {
-  operationType: "from";
+export interface TableOperation extends BaseOperation {
+  type: "table";
   table: string;
   schema?: string;
 }
 
 /**
- * WHERE operation - filters the source
+ * WHERE operation
  */
-export interface WhereOperation extends QueryOperation {
-  operationType: "where";
+export interface WhereOperation extends BaseOperation {
+  type: "where";
   source: QueryOperation;
-  predicate: BooleanExpression;
+  predicate: string; // Lambda string
+  expression?: Expression; // Added by converter
+  registry?: ParameterRegistry; // Added by converter
 }
 
 /**
- * SELECT operation - projects the source
+ * SELECT operation
  */
-export interface SelectOperation extends QueryOperation {
-  operationType: "select";
+export interface SelectOperation extends BaseOperation {
+  type: "select";
   source: QueryOperation;
-  selector: ValueExpression | ObjectExpression;
-}
-
-/**
- * JOIN operation
- */
-export interface JoinOperation extends QueryOperation {
-  operationType: "join";
-  source: QueryOperation;
-  inner: QueryOperation;
-  outerKey: string; // Simple column name
-  innerKey: string; // Simple column name
-  outerKeySource?: number; // Which source table the outer key comes from (for chained JOINs)
-  resultSelector?: Expression; // The projection expression from the result selector lambda
-  resultShape?: ResultShape; // Tracks the shape of the JOIN result for nested property resolution
-}
-
-/**
- * Represents the shape of a JOIN result with full nested structure preservation
- */
-export interface ResultShape {
-  type: "object";
-  properties: Map<string, ShapeNode>;
-}
-
-/**
- * A node in the shape tree that can be a column, object, or reference
- */
-export type ShapeNode = ColumnShapeNode | ObjectShapeNode | ReferenceShapeNode | ArrayShapeNode;
-
-/**
- * Represents a direct column reference
- */
-export interface ColumnShapeNode {
-  type: "column";
-  sourceTable: number; // Which JOIN parameter (0=outer, 1=inner)
-  columnName: string; // The actual column name
-}
-
-/**
- * Represents a nested object with properties
- */
-export interface ObjectShapeNode {
-  type: "object";
-  properties: Map<string, ShapeNode>;
-}
-
-/**
- * Represents a reference to an entire table/parameter
- */
-export interface ReferenceShapeNode {
-  type: "reference";
-  sourceTable: number; // References the entire table
-}
-
-/**
- * Represents an array (for future support)
- */
-export interface ArrayShapeNode {
-  type: "array";
-  elementShape: ShapeNode;
+  projection: string; // Lambda string
+  expression?: Expression; // Added by converter
+  registry?: ParameterRegistry; // Added by converter
 }
 
 /**
  * GROUP BY operation
  */
-export interface GroupByOperation extends QueryOperation {
-  operationType: "groupBy";
+export interface GroupByOperation extends BaseOperation {
+  type: "groupBy";
   source: QueryOperation;
-  keySelector: Expression; // Support any expression including composite keys
+  keySelector: string; // Lambda string for key selection
+  elementSelector?: string; // Optional lambda for element transformation
+  keyExpression?: RowExpression; // Added by converter
+  elementExpression?: GroupExpression; // Added by converter
+  registry?: ParameterRegistry; // Added by converter
 }
 
 /**
  * ORDER BY operation
  */
-export interface OrderByOperation extends QueryOperation {
-  operationType: "orderBy";
+export interface OrderByOperation extends BaseOperation {
+  type: "orderBy";
   source: QueryOperation;
-  keySelector: string | ValueExpression; // Support both simple columns and computed expressions
-  descending: boolean;
+  keySelector: string; // Lambda string
+  expression?: Expression; // Added by converter
+  registry?: ParameterRegistry; // Added by converter
 }
 
 /**
- * THEN BY operation - secondary ordering
+ * ORDER BY DESCENDING operation
  */
-export interface ThenByOperation extends QueryOperation {
-  operationType: "thenBy";
-  source: QueryOperation; // Must be OrderByOperation or ThenByOperation
-  keySelector: string | ValueExpression; // Support both simple columns and computed expressions
-  descending: boolean;
+export interface OrderByDescendingOperation extends BaseOperation {
+  type: "orderByDescending";
+  source: QueryOperation;
+  keySelector: string; // Lambda string
+  expression?: Expression; // Added by converter
+  registry?: ParameterRegistry; // Added by converter
+}
+
+/**
+ * JOIN operation
+ */
+export interface JoinOperation extends BaseOperation {
+  type: "join";
+  outer: QueryOperation;
+  inner: QueryOperation;
+  outerKeySelector: string; // Lambda string
+  innerKeySelector: string; // Lambda string
+  resultSelector?: string; // Optional lambda for result projection
+  outerKeyExpression?: RowExpression; // Added by converter
+  innerKeyExpression?: RowExpression; // Added by converter
+  resultExpression?: RowExpression; // Added by converter
+  registry?: ParameterRegistry; // Added by converter
 }
 
 /**
  * DISTINCT operation
  */
-export interface DistinctOperation extends QueryOperation {
-  operationType: "distinct";
+export interface DistinctOperation extends BaseOperation {
+  type: "distinct";
   source: QueryOperation;
 }
 
 /**
- * TAKE operation (LIMIT)
+ * SKIP operation
  */
-export interface TakeOperation extends QueryOperation {
-  operationType: "take";
+export interface SkipOperation extends BaseOperation {
+  type: "skip";
   source: QueryOperation;
-  count: number | ParamRef;
+  count: number;
+  countExpression?: Expression; // Added by converter
+  registry?: ParameterRegistry; // Added by converter
 }
 
 /**
- * SKIP operation (OFFSET)
+ * TAKE operation
  */
-export interface SkipOperation extends QueryOperation {
-  operationType: "skip";
+export interface TakeOperation extends BaseOperation {
+  type: "take";
   source: QueryOperation;
-  count: number | ParamRef;
+  count: number;
+  countExpression?: Expression; // Added by converter
+  registry?: ParameterRegistry; // Added by converter
 }
 
 /**
- * REVERSE operation
+ * Union type for all query operations
  */
-export interface ReverseOperation extends QueryOperation {
-  operationType: "reverse";
-  source: QueryOperation;
-}
-
-/**
- * DEFAULT IF EMPTY operation
- */
-export interface DefaultIfEmptyOperation extends QueryOperation {
-  operationType: "defaultIfEmpty";
-  source: QueryOperation;
-  defaultValue?: ValueExpression;
-}
-
-/**
- * ZIP operation
- */
-export interface ZipOperation extends QueryOperation {
-  operationType: "zip";
-  source: QueryOperation;
-  second: QueryOperation;
-  resultSelector: ObjectExpression;
-}
-
-/**
- * APPEND operation
- */
-export interface AppendOperation extends QueryOperation {
-  operationType: "append";
-  source: QueryOperation;
-  element: ValueExpression | ObjectExpression;
-}
-
-/**
- * PREPEND operation
- */
-export interface PrependOperation extends QueryOperation {
-  operationType: "prepend";
-  source: QueryOperation;
-  element: ValueExpression | ObjectExpression;
-}
-
-/**
- * HAVING operation - filters after grouping
- */
-export interface HavingOperation extends QueryOperation {
-  operationType: "having";
-  source: QueryOperation; // Must be GroupByOperation
-  predicate: BooleanExpression;
-}
-
-// ==================== Terminal Operations ====================
-
-/**
- * FIRST operation
- */
-export interface FirstOperation extends QueryOperation {
-  operationType: "first";
-  source: QueryOperation;
-  predicate?: BooleanExpression;
-}
-
-/**
- * FIRST OR DEFAULT operation
- */
-export interface FirstOrDefaultOperation extends QueryOperation {
-  operationType: "firstOrDefault";
-  source: QueryOperation;
-  predicate?: BooleanExpression;
-}
-
-/**
- * SINGLE operation
- */
-export interface SingleOperation extends QueryOperation {
-  operationType: "single";
-  source: QueryOperation;
-  predicate?: BooleanExpression;
-}
-
-/**
- * SINGLE OR DEFAULT operation
- */
-export interface SingleOrDefaultOperation extends QueryOperation {
-  operationType: "singleOrDefault";
-  source: QueryOperation;
-  predicate?: BooleanExpression;
-}
-
-/**
- * LAST operation
- */
-export interface LastOperation extends QueryOperation {
-  operationType: "last";
-  source: QueryOperation;
-  predicate?: BooleanExpression;
-}
-
-/**
- * LAST OR DEFAULT operation
- */
-export interface LastOrDefaultOperation extends QueryOperation {
-  operationType: "lastOrDefault";
-  source: QueryOperation;
-  predicate?: BooleanExpression;
-}
-
-/**
- * ANY operation
- */
-export interface AnyOperation extends QueryOperation {
-  operationType: "any";
-  source: QueryOperation;
-  predicate?: BooleanExpression;
-}
-
-/**
- * ALL operation
- */
-export interface AllOperation extends QueryOperation {
-  operationType: "all";
-  source: QueryOperation;
-  predicate: BooleanExpression; // Required for ALL
-}
-
-/**
- * CONTAINS operation
- */
-export interface ContainsOperation extends QueryOperation {
-  operationType: "contains";
-  source: QueryOperation;
-  value: ValueExpression;
-}
-
-/**
- * COUNT operation
- */
-export interface CountOperation extends QueryOperation {
-  operationType: "count";
-  source: QueryOperation;
-  predicate?: BooleanExpression;
-}
-
-/**
- * LONG COUNT operation
- */
-export interface LongCountOperation extends QueryOperation {
-  operationType: "longCount";
-  source: QueryOperation;
-  predicate?: BooleanExpression;
-}
-
-/**
- * SUM operation
- */
-export interface SumOperation extends QueryOperation {
-  operationType: "sum";
-  source: QueryOperation;
-  selector?: string; // Column name only
-}
-
-/**
- * AVERAGE operation
- */
-export interface AverageOperation extends QueryOperation {
-  operationType: "average";
-  source: QueryOperation;
-  selector?: string; // Column name only
-}
-
-/**
- * MIN operation
- */
-export interface MinOperation extends QueryOperation {
-  operationType: "min";
-  source: QueryOperation;
-  selector?: string; // Column name only
-}
-
-/**
- * MAX operation
- */
-export interface MaxOperation extends QueryOperation {
-  operationType: "max";
-  source: QueryOperation;
-  selector?: string; // Column name only
-}
-
-/**
- * AGGREGATE operation
- */
-export interface AggregateOperation extends QueryOperation {
-  operationType: "aggregate";
-  source: QueryOperation;
-  seed: ValueExpression;
-  func: ObjectExpression; // Aggregate function
-  resultSelector?: ObjectExpression;
-}
-
-/**
- * TO ARRAY operation
- */
-export interface ToArrayOperation extends QueryOperation {
-  operationType: "toArray";
-  source: QueryOperation;
-}
-
-/**
- * TO LIST operation
- */
-export interface ToListOperation extends QueryOperation {
-  operationType: "toList";
-  source: QueryOperation;
-}
-
-/**
- * TO DICTIONARY operation
- */
-export interface ToDictionaryOperation extends QueryOperation {
-  operationType: "toDictionary";
-  source: QueryOperation;
-  keySelector: string | ValueExpression;
-  elementSelector?: ValueExpression | ObjectExpression;
-}
-
-/**
- * TO LOOKUP operation
- */
-export interface ToLookupOperation extends QueryOperation {
-  operationType: "toLookup";
-  source: QueryOperation;
-  keySelector: string | ValueExpression;
-  elementSelector?: ValueExpression | ObjectExpression;
-}
-
-/**
- * Union type for all chainable operations
- */
-export type ChainableOperation =
-  | FromOperation
+export type QueryOperation =
+  | TableOperation
   | WhereOperation
   | SelectOperation
-  | JoinOperation
   | GroupByOperation
   | OrderByOperation
-  | ThenByOperation
+  | OrderByDescendingOperation
+  | JoinOperation
   | DistinctOperation
-  | TakeOperation
   | SkipOperation
-  | ReverseOperation;
-
-/**
- * Union type for all terminal operations
- */
-export type TerminalOperation =
-  | FirstOperation
-  | FirstOrDefaultOperation
-  | SingleOperation
-  | SingleOrDefaultOperation
-  | LastOperation
-  | LastOrDefaultOperation
-  | ContainsOperation
-  | CountOperation
-  | SumOperation
-  | AverageOperation
-  | MinOperation
-  | MaxOperation
-  | ToArrayOperation;
-
-/**
- * Union type for all operations
- */
-export type AnyQueryOperation = ChainableOperation | TerminalOperation;
+  | TakeOperation;
