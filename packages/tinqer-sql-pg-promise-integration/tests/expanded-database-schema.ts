@@ -31,6 +31,7 @@ export interface ExpandedTestDatabaseSchema {
     id: number;
     company_id: number;
     name: string;
+    parent_dept_id: number | null;
     budget: number | null;
     head_count: number;
     created_at: Date;

@@ -122,7 +122,7 @@ describe("PostgreSQL Integration - Date/Time Operations", () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "orders")
           .where((o) => o.order_date >= new Date("2024-01-01"))
-          .groupBy((o) => ({
+          .groupBy(() => ({
             year: 2024,  // Simplified - would need EXTRACT(YEAR FROM order_date)
             month: 1     // Simplified - would need EXTRACT(MONTH FROM order_date)
           }))
@@ -230,7 +230,7 @@ describe("PostgreSQL Integration - Date/Time Operations", () => {
             name: p.name,
             updatedAt: p.updated_at
           }))
-          .orderByDescending((p) => p.updated_at)
+          .orderByDescending((p) => p.updatedAt)
           .take(10)
       );
 

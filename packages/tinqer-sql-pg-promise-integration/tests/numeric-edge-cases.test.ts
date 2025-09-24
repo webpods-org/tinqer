@@ -174,11 +174,13 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
       const results = await execute(
         db,
         (p) => from(dbContext, "products")
+          .where((pr) => (pr.price - (pr.cost ?? pr.price * 2)) < p.negativeThreshold)
           .select((pr) => ({
             id: pr.id,
-            profit: pr.price - (pr.cost ?? pr.price * 2), // Could be negative
+            price: pr.price,
+            cost: pr.cost,
+            profit: pr.price - (pr.cost ?? pr.price * 2) // Could be negative
           }))
-          .where((pr) => (pr.price - (pr.cost ?? pr.price * 2)) < p.negativeThreshold)
           .take(10),
         params
       );
@@ -192,7 +194,8 @@ describe("PostgreSQL Integration - Numeric Edge Cases", () => {
         from(dbContext, "products")
           .select((p) => ({
             id: p.id,
-            adjustedPrice: p.price - 1000, // Will be negative for cheaper products
+            price: p.price,
+            adjustedPrice: p.price - 1000 // Will be negative for cheaper products
           }))
           .orderBy((p) => p.price - 1000)
           .take(10)

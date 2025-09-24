@@ -38,7 +38,7 @@ describe("PostgreSQL Integration - Advanced SELECT Projections", () => {
       expect(results).to.be.an("array");
       results.forEach((r) => {
         expect(r.profit).to.equal(r.price - (r.cost ?? 0));
-        expect(r.totalInventoryValue).to.equal(r.price * results[0]!.stock); // Note: stock isn't in projection
+        // Note: stock isn't in projection, so can't verify totalInventoryValue calculation
         expect(r).to.have.all.keys(
           "id", "name", "price", "cost", "profit",
           "profitMargin", "totalInventoryValue", "totalInventoryCost", "totalPotentialProfit"

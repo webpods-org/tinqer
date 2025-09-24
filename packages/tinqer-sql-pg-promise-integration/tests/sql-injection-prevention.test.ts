@@ -279,12 +279,6 @@ describe("PostgreSQL Integration - SQL Injection Prevention", () => {
   describe("Verification of parameterization", () => {
     it("should use parameterized queries for all user inputs", async () => {
       // Test that legitimate special characters work correctly when parameterized
-      const legitimateInputs = [
-        "O'Connor", // Apostrophe in name
-        "test@example.com",
-        "Product (Special Edition)",
-        "Price: $99.99"
-      ];
 
       // First, insert a test user with special characters
       await db.none(

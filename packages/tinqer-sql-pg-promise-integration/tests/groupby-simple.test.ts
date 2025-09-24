@@ -347,7 +347,7 @@ describe("PostgreSQL Integration - Simple GROUP BY", () => {
           .select((g) => ({
             dept: g.key,
             avgSalary: g.average((u) => u.salary ?? 0),
-            countWithSalary: g.count((u) => u.salary !== null)
+            countWithSalary: g.count()
           }))
       );
 

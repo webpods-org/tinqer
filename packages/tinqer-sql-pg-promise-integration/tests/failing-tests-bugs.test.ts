@@ -6,7 +6,7 @@
 import { describe, it, before } from "mocha";
 import { expect } from "chai";
 import { from } from "@webpods/tinqer";
-import { execute, executeSimple } from "@webpods/tinqer-sql-pg-promise";
+import { executeSimple } from "@webpods/tinqer-sql-pg-promise";
 import { setupExpandedTestDatabase, seedExpandedTestData } from "./expanded-test-setup.js";
 import { db } from "./shared-db.js";
 import { expandedDbContext as dbContext } from "./expanded-database-schema.js";
@@ -21,38 +21,40 @@ describe("Failing Tests - Document Bugs", () => {
     it.skip("should filter groups with HAVING count condition - NOT IMPLEMENTED", async () => {
       // This test fails with: Error: Failed to parse query
       // HAVING clause is defined in operations.d.ts but not implemented in SQL adapter
-      const results = await executeSimple(db, () =>
-        from(dbContext, "orders")
-          .groupBy((o) => ({ userId: o.user_id }))
-          .having((g) => g.count() > 2)
-          .select((g) => ({
-            customerId: g.key.userId,
-            orderCount: g.count()
-          }))
-      );
 
-      expect(results).to.be.an("array");
-      results.forEach((row) => {
-        expect(row.orderCount).to.be.greaterThan(2);
-      });
+      // const results = await executeSimple(db, () =>
+      //   from(dbContext, "orders")
+      //     .groupBy((o) => ({ userId: o.user_id }))
+      //     .having((g: any) => g.count() > 2)
+      //     .select((g: any) => ({
+      //       customerId: g.key.userId,
+      //       orderCount: g.count()
+      //     }))
+      // );
+
+      // expect(results).to.be.an("array");
+      // results.forEach((row: any) => {
+      //   expect(row.orderCount).to.be.greaterThan(2);
+      // });
     });
 
     it.skip("should filter with HAVING on aggregate sum - NOT IMPLEMENTED", async () => {
       // HAVING with SUM aggregate
-      const results = await executeSimple(db, () =>
-        from(dbContext, "orders")
-          .groupBy((o) => ({ userId: o.user_id }))
-          .having((g) => g.sum((o) => o.total_amount) > 1000)
-          .select((g) => ({
-            customerId: g.key.userId,
-            totalSpent: g.sum((o) => o.total_amount)
-          }))
-      );
 
-      expect(results).to.be.an("array");
-      results.forEach((row) => {
-        expect(row.totalSpent).to.be.greaterThan(1000);
-      });
+      // const results = await executeSimple(db, () =>
+      //   from(dbContext, "orders")
+      //     .groupBy((o) => ({ userId: o.user_id }))
+      //     .having((g: any) => g.sum((o: any) => o.total_amount) > 1000)
+      //     .select((g: any) => ({
+      //       customerId: g.key.userId,
+      //       totalSpent: g.sum((o: any) => o.total_amount)
+      //     }))
+      // );
+
+      // expect(results).to.be.an("array");
+      // results.forEach((row: any) => {
+      //   expect(row.totalSpent).to.be.greaterThan(1000);
+      // });
     });
   });
 
@@ -142,16 +144,17 @@ describe("Failing Tests - Document Bugs", () => {
     it.skip("should use EXISTS subquery - NOT IMPLEMENTED", async () => {
       // Subqueries are not implemented in the SQL adapter
       // This would need EXISTS operation support
-      const results = await executeSimple(db, () =>
-        from(dbContext, "users")
-          .where((u) =>
-            from(dbContext, "orders")
-              .where((o) => o.user_id === u.id && o.total_amount > 1000)
-              .any()
-          )
-      );
+      // const results = await executeSimple(db, () =>
+      //   from(dbContext, "users")
+      //     .where((u) =>
+      //       from(dbContext, "orders")
+      //         .where((o) => o.user_id === u.id && o.total_amount > 1000)
+      //         .any()
+      //     )
+      // );
 
-      expect(results).to.be.an("array");
+      // expect(results).to.be.an("array");
+      expect(true).to.equal(true); // Placeholder
     });
 
     it.skip("should use scalar subquery in SELECT - NOT IMPLEMENTED", async () => {
@@ -193,19 +196,20 @@ describe("Failing Tests - Document Bugs", () => {
     it.skip("should use ROW_NUMBER window function - NOT IMPLEMENTED", async () => {
       // Window functions like ROW_NUMBER, RANK are not supported
       // Would need window function operation support
-      const results = await executeSimple(db, () =>
-        from(dbContext, "employees")
-          .select((e) => ({
-            name: e.first_name,
-            salary: e.salary,
-            salaryRank: rowNumber()
-              .over()
-              .orderBy((e) => e.salary)
-              .partitionBy((e) => e.department_id)
-          }))
-      );
+      // const results = await executeSimple(db, () =>
+      //   from(dbContext, "employees")
+      //     .select((e) => ({
+      //       name: e.first_name,
+      //       salary: e.salary,
+      //       salaryRank: rowNumber()
+      //         .over()
+      //         .orderBy((e: any) => e.salary)
+      //         .partitionBy((e: any) => e.department_id)
+      //     }))
+      // );
 
-      expect(results).to.be.an("array");
+      // expect(results).to.be.an("array");
+      expect(true).to.equal(true); // Placeholder
     });
   });
 
@@ -229,23 +233,26 @@ describe("Failing Tests - Document Bugs", () => {
     it.skip("should perform LEFT OUTER JOIN - NOT IMPLEMENTED", async () => {
       // Only INNER JOIN is currently supported
       // LEFT/RIGHT/FULL OUTER JOINs are not implemented
-      const results = await executeSimple(db, () =>
-        from(dbContext, "users")
-          .leftJoin(
-            from(dbContext, "departments"),
-            (u) => u.department_id,
-            (d) => d.id,
-            (u, d) => ({
-              userName: u.name,
-              departmentName: d?.name ?? "No Department"
-            })
-          )
-      );
 
-      expect(results).to.be.an("array");
-      // Should include users with no department
-      const noDeptUsers = results.filter(r => r.departmentName === "No Department");
-      expect(noDeptUsers.length).to.be.greaterThan(0);
+      // @ts-ignore - leftJoin doesn't exist yet
+      // const results = await executeSimple(db, () =>
+      //   from(dbContext, "users")
+      //     .leftJoin(
+      //       from(dbContext, "departments"),
+      //       (u) => u.department_id,
+      //       (d) => d.id,
+      //       (u, d) => ({
+      //         userName: u.name,
+      //         departmentName: d?.name ?? "No Department"
+      //       })
+      //     )
+      // );
+
+      // expect(results).to.be.an("array");
+      // // Should include users with no department
+      // const noDeptUsers = results.filter(r => r.departmentName === "No Department");
+      // expect(noDeptUsers.length).to.be.greaterThan(0);
+      expect(true).to.equal(true); // Placeholder
     });
   });
 });

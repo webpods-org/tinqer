@@ -114,7 +114,7 @@ describe("PostgreSQL Integration - Search Patterns", () => {
     it("should find products with specific SKU suffix", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
-          .where((p) => p.sku.endsWith("XL"))
+          .where((p) => p.sku !== null && p.sku.endsWith("XL"))
           .select((p) => ({ sku: p.sku }))
       );
 
@@ -127,10 +127,10 @@ describe("PostgreSQL Integration - Search Patterns", () => {
     it("should find records containing pattern", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
-          .where((p) => p.description.includes("quality"))
-          .select((p) => ({ 
-            id: p.id, 
-            description: p.description 
+          .where((p) => p.description !== null && p.description.includes("quality"))
+          .select((p) => ({
+            id: p.id,
+            description: p.description
           }))
           .take(10)
       );
@@ -182,13 +182,14 @@ describe("PostgreSQL Integration - Search Patterns", () => {
     it("should combine multiple search patterns", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
-          .where((p) => 
+          .where((p) =>
             p.name.startsWith("Product") &&
+            p.description !== null &&
             p.description.includes("premium")
           )
-          .select((p) => ({ 
-            name: p.name, 
-            description: p.description 
+          .select((p) => ({
+            name: p.name,
+            description: p.description
           }))
           .take(10)
       );
@@ -225,10 +226,10 @@ describe("PostgreSQL Integration - Search Patterns", () => {
       const results = await execute(
         db,
         (p) => from(dbContext, "products")
-          .where((pr) => 
+          .where((pr) =>
             pr.name.includes(p.search) ||
-            pr.description.includes(p.search) ||
-            pr.sku.includes(p.search)
+            (pr.description !== null && pr.description.includes(p.search)) ||
+            (pr.sku !== null && pr.sku.includes(p.search))
           )
           .select((pr) => ({ 
             id: pr.id,
@@ -243,10 +244,10 @@ describe("PostgreSQL Integration - Search Patterns", () => {
       expect(results).to.be.an("array");
       results.forEach((product) => {
         const searchLower = params.search.toLowerCase();
-        const hasMatch = 
+        const hasMatch =
           product.name.toLowerCase().includes(searchLower) ||
           (product.description?.toLowerCase().includes(searchLower) ?? false) ||
-          product.sku.toLowerCase().includes(searchLower);
+          (product.sku?.toLowerCase().includes(searchLower) ?? false);
         expect(hasMatch).to.be.true;
       });
     });
@@ -260,7 +261,7 @@ describe("PostgreSQL Integration - Search Patterns", () => {
       const results = await execute(
         db,
         (p) => from(dbContext, "products")
-          .where((pr) => pr.description.includes(p.pattern))
+          .where((pr) => pr.description !== null && pr.description.includes(p.pattern))
           .select((pr) => ({ description: pr.description })),
         params
       );
@@ -280,7 +281,7 @@ describe("PostgreSQL Integration - Search Patterns", () => {
       const results = await execute(
         db,
         (p) => from(dbContext, "products")
-          .where((pr) => pr.description.includes(p.pattern))
+          .where((pr) => pr.description !== null && pr.description.includes(p.pattern))
           .select((pr) => ({ description: pr.description })),
         params
       );
@@ -340,7 +341,7 @@ describe("PostgreSQL Integration - Search Patterns", () => {
     it("should exclude NULL values in pattern search", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
-          .where((p) => p.description.includes("test"))
+          .where((p) => p.description !== null && p.description.includes("test"))
           .count()
       );
 

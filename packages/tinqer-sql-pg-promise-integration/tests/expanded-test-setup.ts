@@ -60,10 +60,12 @@ export async function setupExpandedTestDatabase(db: IDatabase<any>) {
       id SERIAL PRIMARY KEY,
       company_id INTEGER NOT NULL,
       name VARCHAR(100) NOT NULL,
+      parent_dept_id INTEGER,
       budget DECIMAL(12, 2),
       head_count INTEGER DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (company_id) REFERENCES companies(id)
+      FOREIGN KEY (company_id) REFERENCES companies(id),
+      FOREIGN KEY (parent_dept_id) REFERENCES departments(id)
     );
   `);
 

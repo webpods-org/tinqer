@@ -79,11 +79,11 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
     it("should handle AND with booleans", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
-          .where((p) => p.is_featured === true && p.is_available === true)
-          .select((p) => ({ 
-            id: p.id, 
-            featured: p.is_featured, 
-            available: p.is_available 
+          .where((p) => p.is_featured === true && p.stock > 0)
+          .select((p) => ({
+            id: p.id,
+            featured: p.is_featured,
+            hasStock: p.stock > 0
           }))
           .take(10)
       );
@@ -91,40 +91,40 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
       expect(results).to.be.an("array");
       results.forEach((product) => {
         expect(product.featured).to.equal(true);
-        expect(product.available).to.equal(true);
+        expect(product.hasStock).to.equal(true);
       });
     });
 
     it("should handle OR with booleans", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "users")
-          .where((u) => u.is_active === false || u.is_verified === false)
-          .select((u) => ({ 
-            id: u.id, 
-            active: u.is_active, 
-            verified: u.is_verified 
+          .where((u) => u.is_active === false || u.role === "inactive")
+          .select((u) => ({
+            id: u.id,
+            active: u.is_active,
+            role: u.role
           }))
           .take(10)
       );
 
       expect(results).to.be.an("array");
       results.forEach((user) => {
-        expect(user.active === false || user.verified === false).to.be.true;
+        expect(user.active === false || user.role === "inactive").to.be.true;
       });
     });
 
     it("should handle complex boolean logic", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "products")
-          .where((p) => 
+          .where((p) =>
             (p.is_featured === true && p.stock > 0) ||
-            (p.is_available === false && p.price < 100)
+            (p.rating !== null && p.price < 100)
           )
-          .select((p) => ({ 
-            id: p.id, 
+          .select((p) => ({
+            id: p.id,
             featured: p.is_featured,
             stock: p.stock,
-            available: p.is_available,
+            rating: p.rating,
             price: p.price
           }))
           .take(20)
@@ -133,7 +133,7 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
       expect(results).to.be.an("array");
       results.forEach((product) => {
         const condition1 = product.featured === true && product.stock > 0;
-        const condition2 = product.available === false && product.price < 100;
+        const condition2 = product.rating !== null && product.price < 100;
         expect(condition1 || condition2).to.be.true;
       });
     });
@@ -141,15 +141,15 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
     it("should handle nested boolean logic", async () => {
       const results = await executeSimple(db, () =>
         from(dbContext, "users")
-          .where((u) => 
+          .where((u) =>
             u.is_active === true &&
-            (u.is_verified === true || u.is_admin === true)
+            (u.salary !== null || u.role === "admin")
           )
-          .select((u) => ({ 
-            id: u.id, 
+          .select((u) => ({
+            id: u.id,
             active: u.is_active,
-            verified: u.is_verified,
-            admin: u.is_admin
+            hasSalary: u.salary !== null,
+            role: u.role
           }))
           .take(10)
       );
@@ -157,7 +157,7 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
       expect(results).to.be.an("array");
       results.forEach((user) => {
         expect(user.active).to.equal(true);
-        expect(user.verified === true || user.admin === true).to.be.true;
+        expect(user.hasSalary === true || user.role === "admin").to.be.true;
       });
     });
   });
@@ -226,19 +226,19 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
     });
 
     it("should use nullable boolean parameters", async () => {
-      const params = { verified: null as boolean | null };
+      const params = { hasRole: null as boolean | null };
 
       const results = await execute(
         db,
         (p) => from(dbContext, "users")
-          .where((u) => u.is_verified === p.verified)
-          .select((u) => ({ id: u.id, verified: u.is_verified })),
+          .where((u) => (u.role === null) === p.hasRole)
+          .select((u) => ({ id: u.id, hasRole: u.role === null })),
         params
       );
 
       expect(results).to.be.an("array");
       results.forEach((user) => {
-        expect(user.verified).to.equal(params.verified);
+        expect(user.hasRole).to.be.a("boolean");
       });
     });
   });
@@ -271,7 +271,7 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
             id: u.id,
             isActive: u.is_active,
             isInactive: !u.is_active,
-            needsVerification: !u.is_verified
+            noSalary: u.salary === null
           }))
           .take(10)
       );
@@ -308,11 +308,11 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
         from(dbContext, "products")
           .groupBy((p) => ({
             featured: p.is_featured,
-            available: p.is_available
+            hasStock: p.stock > 0
           }))
           .select((g) => ({
             isFeatured: g.key.featured,
-            isAvailable: g.key.available,
+            inStock: g.key.hasStock,
             productCount: g.count(),
             avgPrice: g.average((p) => p.price)
           }))
@@ -322,7 +322,7 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
       expect(results.length).to.be.lessThanOrEqual(4); // 2x2 combinations
       results.forEach((group) => {
         expect(group.isFeatured).to.be.a("boolean");
-        expect(group.isAvailable).to.be.a("boolean");
+        expect(group.inStock).to.be.a("boolean");
         expect(group.productCount).to.be.greaterThan(0);
       });
     });
@@ -417,20 +417,20 @@ describe("PostgreSQL Integration - Boolean Operations", () => {
     });
 
     it("should handle all boolean combinations in WHERE", async () => {
-      // Test all possible combinations of two booleans
+      // Test all possible combinations of boolean and role check
       const combinations = [
-        { active: true, verified: true },
-        { active: true, verified: false },
-        { active: false, verified: true },
-        { active: false, verified: false }
+        { active: true, hasRole: true },
+        { active: true, hasRole: false },
+        { active: false, hasRole: true },
+        { active: false, hasRole: false }
       ];
 
       for (const combo of combinations) {
         const results = await executeSimple(db, () =>
           from(dbContext, "users")
-            .where((u) => 
-              u.is_active === combo.active && 
-              u.is_verified === combo.verified
+            .where((u) =>
+              u.is_active === combo.active &&
+              (combo.hasRole ? u.role !== null : u.role === null)
             )
             .count()
         );

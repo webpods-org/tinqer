@@ -128,7 +128,7 @@ describe("PostgreSQL Integration - Advanced ORDER BY", () => {
       // Check ordering
       for (let i = 1; i < results.length; i++) {
         if (results[i - 1]!.categoryId !== null && results[i]!.categoryId !== null) {
-          expect(results[i - 1]!.categoryId).to.be.lessThanOrEqual(results[i]!.categoryId);
+          expect(results[i - 1]!.categoryId!).to.be.lessThanOrEqual(results[i]!.categoryId!);
         }
       }
     });
