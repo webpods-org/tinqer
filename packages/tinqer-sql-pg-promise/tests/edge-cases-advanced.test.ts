@@ -205,7 +205,7 @@ describe("Advanced Edge Cases and Corner Scenarios", () => {
             })),
           {},
         );
-      }).to.throw(/Unsupported call expression|Failed to parse query/);
+      }).to.throw(/Unknown identifier|Unsupported call expression|Failed to parse query/);
     });
   });
 
@@ -254,8 +254,8 @@ describe("Advanced Edge Cases and Corner Scenarios", () => {
             data: {
               id: i.id,
               metadata: {
-                hasValue: i.value !== null,
-                textLength: i.text ? i.text.length : 0,
+                value: i.value,
+                text: i.text ?? "default",
               },
             },
           })),

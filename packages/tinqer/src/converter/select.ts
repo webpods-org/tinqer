@@ -44,15 +44,18 @@ export function convertSelectOperation(
       const body = (lambdaAst as ArrowFunctionExpression).body;
 
       // Set flag to indicate we're in a SELECT projection
-      const selectContext = {
-        ...context,
-        inSelectProjection: true,
-        hasTableParam: paramName !== null,
-      };
+      // Modify context in place to avoid counter desync
+      const previousInSelect = context.inSelectProjection;
+      const previousHasTableParam = context.hasTableParam;
+      context.inSelectProjection = true;
+      context.hasTableParam = paramName !== null;
 
       // Special case: identity selector (e.g., .select(u => u))
       // This should select all columns (SELECT *)
       if (body.type === "Identifier" && paramName && body.name === paramName) {
+        // Restore context
+        context.inSelectProjection = previousInSelect;
+        context.hasTableParam = previousHasTableParam;
         // Return select with null selector to indicate SELECT *
         return {
           type: "queryOperation",
@@ -63,7 +66,12 @@ export function convertSelectOperation(
       }
 
       const selector =
-        body.type === "BlockStatement" ? null : convertAstToExpression(body, selectContext);
+        body.type === "BlockStatement" ? null : convertAstToExpression(body, context);
+
+      // Restore context
+      context.inSelectProjection = previousInSelect;
+      context.hasTableParam = previousHasTableParam;
+
       if (selector && (isValueExpression(selector) || isObjectExpression(selector))) {
         return {
           type: "queryOperation",

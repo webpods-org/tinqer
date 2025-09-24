@@ -116,6 +116,14 @@ export async function execute<
 > {
   const { sql, params: sqlParams } = query(queryBuilder, params);
 
+  // Debug SQL output if environment variable is set
+  if (process.env.DEBUG_SQL) {
+    console.log("=== DEBUG SQL ===");
+    console.log("SQL:", sql);
+    console.log("Params:", sqlParams);
+    console.log("=================");
+  }
+
   // Check if this is a terminal operation that returns a single value
   const parseResult = parseQuery(queryBuilder);
 

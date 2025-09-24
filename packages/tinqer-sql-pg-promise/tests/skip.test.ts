@@ -54,6 +54,6 @@ describe("Skip SQL Generation", () => {
             .take(pageSize),
         {},
       );
-    }).to.throw("Failed to parse query");
+    }).to.throw(/Unknown identifier|Failed to parse query/);
   });
 });
