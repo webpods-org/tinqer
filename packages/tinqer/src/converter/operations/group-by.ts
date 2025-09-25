@@ -8,7 +8,7 @@ import { visitNode as visitRowNode } from "../visitors/row-visitor.js";
 
 export function convertGroupBy(
   bodyNode: any,
-  context: ConversionContext
+  context: ConversionContext,
 ): ConversionResult<RowExpression> {
   // GROUP BY key selector always operates on rows (before grouping)
   const [expression, registry] = visitRowNode(bodyNode, {

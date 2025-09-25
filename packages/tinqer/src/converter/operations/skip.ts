@@ -8,7 +8,7 @@ import { addParameter } from "../parameter-registry.js";
 
 export function convertSkip(
   count: number,
-  context: ConversionContext
+  context: ConversionContext,
 ): { expression: ConstantExpression; registry: ConversionContext["registry"] } {
   const expression: ConstantExpression = {
     type: "constant",

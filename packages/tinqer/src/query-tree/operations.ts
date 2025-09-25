@@ -9,17 +9,28 @@ import type { Expression, RowExpression, GroupExpression } from "../expressions/
 import type { ParameterRegistry } from "../converter/parameter-registry.js";
 
 /**
+ * Reference to an auto-parameterized value
+ */
+export interface ParamRef {
+  type: "param";
+  param: string; // Parameter name like "__p1"
+}
+
+/**
  * Base query operation
  */
 export interface BaseOperation {
   type: string;
+  operationType?: string; // For backward compatibility with tests
 }
 
 /**
- * TABLE operation - source of queries
+ * FROM operation - source of queries
+ * Note: type is "from" for compatibility with old parser
  */
-export interface TableOperation extends BaseOperation {
-  type: "table";
+export interface FromOperation extends BaseOperation {
+  type: "from";
+  operationType: "from";
   table: string;
   schema?: string;
 }
@@ -29,8 +40,9 @@ export interface TableOperation extends BaseOperation {
  */
 export interface WhereOperation extends BaseOperation {
   type: "where";
+  operationType: "where";
   source: QueryOperation;
-  predicate: string; // Lambda string
+  predicate: string | Expression; // Lambda string or converted expression
   expression?: Expression; // Added by converter
   registry?: ParameterRegistry; // Added by converter
 }
@@ -40,8 +52,9 @@ export interface WhereOperation extends BaseOperation {
  */
 export interface SelectOperation extends BaseOperation {
   type: "select";
+  operationType: "select";
   source: QueryOperation;
-  projection: string; // Lambda string
+  selector: string; // Lambda string - renamed to match old format
   expression?: Expression; // Added by converter
   registry?: ParameterRegistry; // Added by converter
 }
@@ -51,6 +64,7 @@ export interface SelectOperation extends BaseOperation {
  */
 export interface GroupByOperation extends BaseOperation {
   type: "groupBy";
+  operationType: "groupBy";
   source: QueryOperation;
   keySelector: string; // Lambda string for key selection
   elementSelector?: string; // Optional lambda for element transformation
@@ -64,6 +78,7 @@ export interface GroupByOperation extends BaseOperation {
  */
 export interface OrderByOperation extends BaseOperation {
   type: "orderBy";
+  operationType: "orderBy";
   source: QueryOperation;
   keySelector: string; // Lambda string
   expression?: Expression; // Added by converter
@@ -75,7 +90,32 @@ export interface OrderByOperation extends BaseOperation {
  */
 export interface OrderByDescendingOperation extends BaseOperation {
   type: "orderByDescending";
+  operationType: "orderByDescending";
   source: QueryOperation;
+  keySelector: string; // Lambda string
+  expression?: Expression; // Added by converter
+  registry?: ParameterRegistry; // Added by converter
+}
+
+/**
+ * THEN BY operation - secondary sorting
+ */
+export interface ThenByOperation extends BaseOperation {
+  type: "thenBy";
+  operationType: "thenBy";
+  source: QueryOperation; // Must be OrderBy, OrderByDescending, or another ThenBy
+  keySelector: string; // Lambda string
+  expression?: Expression; // Added by converter
+  registry?: ParameterRegistry; // Added by converter
+}
+
+/**
+ * THEN BY DESCENDING operation - secondary sorting descending
+ */
+export interface ThenByDescendingOperation extends BaseOperation {
+  type: "thenByDescending";
+  operationType: "thenByDescending";
+  source: QueryOperation; // Must be OrderBy, OrderByDescending, or another ThenBy
   keySelector: string; // Lambda string
   expression?: Expression; // Added by converter
   registry?: ParameterRegistry; // Added by converter
@@ -86,6 +126,7 @@ export interface OrderByDescendingOperation extends BaseOperation {
  */
 export interface JoinOperation extends BaseOperation {
   type: "join";
+  operationType: "join";
   outer: QueryOperation;
   inner: QueryOperation;
   outerKeySelector: string; // Lambda string
@@ -102,6 +143,7 @@ export interface JoinOperation extends BaseOperation {
  */
 export interface DistinctOperation extends BaseOperation {
   type: "distinct";
+  operationType: "distinct";
   source: QueryOperation;
 }
 
@@ -110,8 +152,9 @@ export interface DistinctOperation extends BaseOperation {
  */
 export interface SkipOperation extends BaseOperation {
   type: "skip";
+  operationType: "skip";
   source: QueryOperation;
-  count: number;
+  count: number | ParamRef; // Can be number or parameterized
   countExpression?: Expression; // Added by converter
   registry?: ParameterRegistry; // Added by converter
 }
@@ -121,8 +164,9 @@ export interface SkipOperation extends BaseOperation {
  */
 export interface TakeOperation extends BaseOperation {
   type: "take";
+  operationType: "take";
   source: QueryOperation;
-  count: number;
+  count: number | ParamRef; // Can be number or parameterized
   countExpression?: Expression; // Added by converter
   registry?: ParameterRegistry; // Added by converter
 }
@@ -131,12 +175,14 @@ export interface TakeOperation extends BaseOperation {
  * Union type for all query operations
  */
 export type QueryOperation =
-  | TableOperation
+  | FromOperation
   | WhereOperation
   | SelectOperation
   | GroupByOperation
   | OrderByOperation
   | OrderByDescendingOperation
+  | ThenByOperation
+  | ThenByDescendingOperation
   | JoinOperation
   | DistinctOperation
   | SkipOperation

@@ -6,10 +6,7 @@ import type { ConversionContext, ConversionResult } from "../converter.js";
 import { visitNode as visitRowNode } from "../visitors/row-visitor.js";
 import { visitNode as visitGroupNode } from "../visitors/group-visitor.js";
 
-export function convertOrderBy(
-  bodyNode: any,
-  context: ConversionContext
-): ConversionResult {
+export function convertOrderBy(bodyNode: any, context: ConversionContext): ConversionResult {
   if (context.isGrouped) {
     // After GROUP BY, use group visitor
     const [expression, registry] = visitGroupNode(bodyNode, {

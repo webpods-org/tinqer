@@ -34,7 +34,7 @@ export function convertLambdaToExpression(
   operation: "where" | "select" | "orderBy" | "groupBy" | "join",
   tableRef: string,
   isGrouped: boolean = false,
-  groupKeys?: Map<string, RowExpression>
+  groupKeys?: Map<string, RowExpression>,
 ): ConversionResult {
   const ast = parseQuery(lambda);
 
@@ -83,7 +83,7 @@ export function convertLambdaToExpression(
  */
 export function convertQueryOperation(
   operation: QueryOperation,
-  parentContext?: ConversionContext
+  parentContext?: ConversionContext,
 ): QueryOperation {
   const context = parentContext || {
     isGrouped: false,
@@ -103,7 +103,7 @@ export function convertQueryOperation(
         "where",
         context.tableRef,
         context.isGrouped,
-        context.groupKeys
+        context.groupKeys,
       );
       return {
         ...operation,
@@ -120,7 +120,7 @@ export function convertQueryOperation(
         "select",
         context.tableRef,
         context.isGrouped,
-        context.groupKeys
+        context.groupKeys,
       );
       return {
         ...operation,
@@ -136,7 +136,7 @@ export function convertQueryOperation(
         operation.keySelector,
         "groupBy",
         context.tableRef,
-        false // GROUP BY key selector operates on rows
+        false, // GROUP BY key selector operates on rows
       ) as ConversionResult<RowExpression>;
 
       // After GROUP BY, context changes - parameter now represents group
@@ -156,7 +156,7 @@ export function convertQueryOperation(
           "select",
           context.tableRef,
           true,
-          newContext.groupKeys
+          newContext.groupKeys,
         ) as ConversionResult<GroupExpression>;
         elementExpression = result.expression;
         elementRegistry = result.registry;
@@ -179,7 +179,7 @@ export function convertQueryOperation(
         "orderBy",
         context.tableRef,
         context.isGrouped,
-        context.groupKeys
+        context.groupKeys,
       );
       return {
         ...operation,
@@ -198,14 +198,14 @@ export function convertQueryOperation(
         operation.outerKeySelector,
         "join",
         context.tableRef,
-        false
+        false,
       ) as ConversionResult<RowExpression>;
 
       const innerResult = convertLambdaToExpression(
         operation.innerKeySelector,
         "join",
         operation.inner.type === "table" ? operation.inner.table : "inner",
-        false
+        false,
       ) as ConversionResult<RowExpression>;
 
       // Parse the result selector if present
@@ -216,7 +216,7 @@ export function convertQueryOperation(
           operation.resultSelector,
           "select",
           context.tableRef,
-          false
+          false,
         ) as ConversionResult<RowExpression>;
         resultExpression = result.expression;
         resultRegistry = result.registry;

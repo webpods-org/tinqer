@@ -20,6 +20,7 @@ import type {
   RowCastExpression,
 } from "../../expressions/expression.js";
 import type { ParameterRegistry } from "../parameter-registry.js";
+import { addParameter } from "../parameter-registry.js";
 
 export interface RowVisitorContext {
   registry: ParameterRegistry;
@@ -35,10 +36,7 @@ export type RowVisitorResult = [RowExpression, ParameterRegistry];
 /**
  * Visit an identifier node
  */
-export function visitIdentifier(
-  node: any,
-  context: RowVisitorContext
-): RowVisitorResult {
+export function visitIdentifier(node: any, context: RowVisitorContext): RowVisitorResult {
   const name = node.name;
 
   // Check if it's a lambda parameter
@@ -66,16 +64,15 @@ export function visitIdentifier(
 /**
  * Visit a member expression (e.g., user.name)
  */
-export function visitMemberExpression(
-  node: any,
-  context: RowVisitorContext
-): RowVisitorResult {
+export function visitMemberExpression(node: any, context: RowVisitorContext): RowVisitorResult {
   const [object, registry] = visitNode(node.object, { ...context, registry: context.registry });
 
   const property = node.computed
     ? node.property.type === "StringLiteral"
       ? node.property.value
-      : (() => { throw new Error("Computed properties must be string literals"); })()
+      : (() => {
+          throw new Error("Computed properties must be string literals");
+        })()
     : node.property.name;
 
   const member: RowMemberExpression = {
@@ -91,10 +88,7 @@ export function visitMemberExpression(
 /**
  * Visit a binary expression
  */
-export function visitBinaryExpression(
-  node: any,
-  context: RowVisitorContext
-): RowVisitorResult {
+export function visitBinaryExpression(node: any, context: RowVisitorContext): RowVisitorResult {
   // Handle nullish coalescing as special case
   if (node.operator === "??") {
     const [left, reg1] = visitNode(node.left, context);
@@ -120,9 +114,33 @@ export function visitBinaryExpression(
     return [inExpr, reg2];
   }
 
+  // Check if this is a comparison operator
+  const isComparison = ["==", "===", "!=", "!==", "<", "<=", ">", ">="].includes(node.operator);
+
   // Standard binary operators
   const [left, reg1] = visitNode(node.left, context);
-  const [right, reg2] = visitNode(node.right, { ...context, registry: reg1 });
+
+  // For comparisons, if right side is a literal, auto-parameterize it
+  let right: RowExpression;
+  let reg2 = reg1;
+
+  if (isComparison && node.right.type === "Literal" && node.right.value !== null) {
+    // Auto-parameterize the literal
+    const [newRegistry, paramName] = addParameter(reg1, node.right.value);
+    right = {
+      type: "row-parameter",
+      name: paramName,
+      origin: {
+        type: "auto-param",
+        ref: paramName,
+      },
+    } as RowParameterExpression;
+    reg2 = newRegistry;
+  } else {
+    const result = visitNode(node.right, { ...context, registry: reg1 });
+    right = result[0];
+    reg2 = result[1];
+  }
 
   const binary: RowBinaryExpression = {
     type: "row-binary",
@@ -137,10 +155,7 @@ export function visitBinaryExpression(
 /**
  * Visit a unary expression
  */
-export function visitUnaryExpression(
-  node: any,
-  context: RowVisitorContext
-): RowVisitorResult {
+export function visitUnaryExpression(node: any, context: RowVisitorContext): RowVisitorResult {
   const [argument, registry] = visitNode(node.argument, context);
 
   const unary: RowUnaryExpression = {
@@ -157,7 +172,7 @@ export function visitUnaryExpression(
  */
 export function visitConditionalExpression(
   node: any,
-  context: RowVisitorContext
+  context: RowVisitorContext,
 ): RowVisitorResult {
   const [test, reg1] = visitNode(node.test, context);
   const [consequent, reg2] = visitNode(node.consequent, { ...context, registry: reg1 });
@@ -176,10 +191,7 @@ export function visitConditionalExpression(
 /**
  * Visit a call expression
  */
-export function visitCallExpression(
-  node: any,
-  context: RowVisitorContext
-): RowVisitorResult {
+export function visitCallExpression(node: any, context: RowVisitorContext): RowVisitorResult {
   // Check if it's a method call
   if (node.callee.type === "MemberExpression") {
     const methodName = node.callee.property.name;
@@ -249,10 +261,7 @@ export function visitCallExpression(
 /**
  * Visit an array expression
  */
-export function visitArrayExpression(
-  node: any,
-  context: RowVisitorContext
-): RowVisitorResult {
+export function visitArrayExpression(node: any, context: RowVisitorContext): RowVisitorResult {
   const elements: RowExpression[] = [];
   let currentReg = context.registry;
 
@@ -281,10 +290,7 @@ export function visitArrayExpression(
 /**
  * Visit an object expression
  */
-export function visitObjectExpression(
-  node: any,
-  context: RowVisitorContext
-): RowVisitorResult {
+export function visitObjectExpression(node: any, context: RowVisitorContext): RowVisitorResult {
   const properties: Array<{ key: string; value: RowExpression }> = [];
   let currentReg = context.registry;
 
@@ -293,11 +299,14 @@ export function visitObjectExpression(
       throw new Error("Spread properties not supported in objects");
     }
 
-    const key = prop.key.type === "Identifier"
-      ? prop.key.name
-      : prop.key.type === "StringLiteral"
-      ? prop.key.value
-      : (() => { throw new Error("Object keys must be identifiers or string literals"); })();
+    const key =
+      prop.key.type === "Identifier"
+        ? prop.key.name
+        : prop.key.type === "StringLiteral"
+          ? prop.key.value
+          : (() => {
+              throw new Error("Object keys must be identifiers or string literals");
+            })();
 
     const [value, newReg] = visitNode(prop.value, { ...context, registry: currentReg });
     properties.push({ key, value });
@@ -315,13 +324,13 @@ export function visitObjectExpression(
 /**
  * Visit a literal node
  */
-export function visitLiteral(
-  node: any,
-  context: RowVisitorContext
-): RowVisitorResult {
+export function visitLiteral(node: any, context: RowVisitorContext): RowVisitorResult {
   let value: unknown;
 
-  if (node.type === "BooleanLiteral") {
+  if (node.type === "Literal") {
+    // OXC parser uses Literal for all primitive values
+    value = node.value;
+  } else if (node.type === "BooleanLiteral") {
     value = node.value;
   } else if (node.type === "NullLiteral") {
     value = null;
@@ -346,10 +355,7 @@ export function visitLiteral(
 /**
  * Main visitor dispatcher
  */
-export function visitNode(
-  node: any,
-  context: RowVisitorContext
-): RowVisitorResult {
+export function visitNode(node: any, context: RowVisitorContext): RowVisitorResult {
   switch (node.type) {
     case "Identifier":
       return visitIdentifier(node, context);
@@ -376,6 +382,7 @@ export function visitNode(
     case "ObjectExpression":
       return visitObjectExpression(node, context);
 
+    case "Literal": // OXC parser uses Literal for all primitives
     case "BooleanLiteral":
     case "NullLiteral":
     case "NumericLiteral":
@@ -395,10 +402,7 @@ export function visitNode(
 /**
  * Visit an arrow function (for subqueries)
  */
-function visitArrowFunction(
-  _node: any,
-  _context: RowVisitorContext
-): RowVisitorResult {
+function visitArrowFunction(_node: any, _context: RowVisitorContext): RowVisitorResult {
   // This would be used for subqueries - implement when needed
   throw new Error("Nested arrow functions (subqueries) not yet implemented");
 }
@@ -424,7 +428,7 @@ function mapBinaryOperator(op: string): BinaryOperator {
     "&&": "&&",
     "||": "||",
     "??": "??",
-    "in": "in",
+    in: "in",
   };
 
   const mapped = mapping[op];

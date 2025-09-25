@@ -14,7 +14,7 @@ describe("FROM Operation", () => {
     const result = parseQuery(query);
 
     expect(getOperation(result)).to.not.be.null;
-    expect(getOperation(result)?.operationType).to.equal("from");
+    expect(getOperation(result)?.type).to.equal("from");
     const fromOp = asFromOperation(getOperation(result));
     expect(fromOp.table).to.equal("users");
   });

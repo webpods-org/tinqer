@@ -1,163 +1,96 @@
 /**
- * AST type definitions for OXC parser output
- * These types represent the JavaScript AST nodes returned by the OXC parser
+ * Minimal AST types for OXC parser output
  */
 
-// Base AST node
 export interface ASTNode {
   type: string;
+  [key: string]: unknown;
 }
 
-// Program node (root of AST)
-export interface Program extends ASTNode {
-  type: "Program";
-  body: Statement[];
-  sourceType: "module" | "script";
-}
-
-// Expression Statement
-export interface ExpressionStatement extends ASTNode {
-  type: "ExpressionStatement";
-  expression: Expression;
-}
-
-// Expressions
 export interface Identifier extends ASTNode {
   type: "Identifier";
   name: string;
 }
 
+export interface Literal extends ASTNode {
+  type: "Literal";
+  value: string | number | boolean | null;
+}
+
 export interface MemberExpression extends ASTNode {
   type: "MemberExpression";
-  object: Expression;
-  property: Expression | Identifier; // Can be any expression when computed
+  object: ASTNode;
+  property: ASTNode;
   computed: boolean;
 }
 
 export interface CallExpression extends ASTNode {
   type: "CallExpression";
-  callee: Expression | MemberExpression | Identifier;
-  arguments: Expression[];
+  callee: ASTNode;
+  arguments: ASTNode[];
 }
 
 export interface ArrowFunctionExpression extends ASTNode {
   type: "ArrowFunctionExpression";
-  params: Identifier[];
-  body: Expression | BlockStatement;
+  params: ASTNode[];
+  body: ASTNode;
 }
 
 export interface BinaryExpression extends ASTNode {
-  type: "BinaryExpression";
+  type: "BinaryExpression" | "LogicalExpression";
   operator: string;
-  left: Expression;
-  right: Expression;
-}
-
-export interface LogicalExpression extends ASTNode {
-  type: "LogicalExpression";
-  operator: "&&" | "||" | "??";
-  left: Expression;
-  right: Expression;
+  left: ASTNode;
+  right: ASTNode;
 }
 
 export interface UnaryExpression extends ASTNode {
   type: "UnaryExpression";
   operator: string;
-  argument: Expression;
+  argument: ASTNode;
 }
 
 export interface ConditionalExpression extends ASTNode {
   type: "ConditionalExpression";
-  test: Expression;
-  consequent: Expression;
-  alternate: Expression;
-}
-
-export interface ObjectExpression extends ASTNode {
-  type: "ObjectExpression";
-  properties: Property[];
-}
-
-export interface Property extends ASTNode {
-  type: "Property";
-  key: Identifier | Literal;
-  value: Expression;
-  kind: "init" | "get" | "set";
+  test: ASTNode;
+  consequent: ASTNode;
+  alternate: ASTNode;
 }
 
 export interface ArrayExpression extends ASTNode {
   type: "ArrayExpression";
-  elements: (Expression | null)[];
+  elements: (ASTNode | null)[];
 }
 
-export interface ParenthesizedExpression extends ASTNode {
-  type: "ParenthesizedExpression";
-  expression: Expression;
+export interface ObjectExpression extends ASTNode {
+  type: "ObjectExpression";
+  properties: Array<{
+    key: ASTNode;
+    value: ASTNode;
+    type: string;
+  }>;
 }
 
-export interface ChainExpression extends ASTNode {
-  type: "ChainExpression";
-  expression: Expression;
-}
-
-// Literals
-export interface Literal extends ASTNode {
-  type: "Literal" | "NumericLiteral" | "StringLiteral" | "BooleanLiteral" | "NullLiteral";
-  value: string | number | boolean | null;
-  raw?: string;
-}
-
-export interface NumericLiteral extends ASTNode {
-  type: "NumericLiteral";
-  value: number;
-}
-
-export interface StringLiteral extends ASTNode {
-  type: "StringLiteral";
-  value: string;
-}
-
-export interface BooleanLiteral extends ASTNode {
-  type: "BooleanLiteral";
-  value: boolean;
-}
-
-export interface NullLiteral extends ASTNode {
-  type: "NullLiteral";
-  value: null;
-}
-
-// Statements (for function bodies)
 export interface BlockStatement extends ASTNode {
   type: "BlockStatement";
-  body: Statement[];
+  body: ASTNode[];
 }
 
 export interface ReturnStatement extends ASTNode {
   type: "ReturnStatement";
-  argument: Expression | null;
+  argument: ASTNode;
 }
 
-// Union types
-export type Expression =
-  | Identifier
-  | MemberExpression
-  | CallExpression
-  | ArrowFunctionExpression
-  | BinaryExpression
-  | LogicalExpression
-  | UnaryExpression
-  | ConditionalExpression
-  | ObjectExpression
-  | ArrayExpression
-  | ParenthesizedExpression
-  | ChainExpression
-  | Literal
-  | NumericLiteral
-  | StringLiteral
-  | BooleanLiteral
-  | NullLiteral;
+export interface ExpressionStatement extends ASTNode {
+  type: "ExpressionStatement";
+  expression: ASTNode;
+}
 
-export type Statement = BlockStatement | ReturnStatement | ExpressionStatement;
+export interface Program extends ASTNode {
+  type: "Program";
+  body: ASTNode[];
+}
 
-export type ASTNodeType = Expression | Statement;
+export interface SpreadElement extends ASTNode {
+  type: "SpreadElement";
+  argument: ASTNode;
+}

@@ -2,9 +2,7 @@ import type { QueryOperation } from "../query-tree/operations.js";
 
 // ==================== Parameter Origin ====================
 
-export type ParameterOrigin =
-  | { type: "table"; ref: string }
-  | { type: "lambda"; ref: string };
+export type ParameterOrigin = { type: "table"; ref: string } | { type: "lambda"; ref: string };
 
 // ==================== Constants (work in both contexts) ====================
 
@@ -277,11 +275,22 @@ export type Expression = RowExpression | GroupExpression;
 // ==================== Operators ====================
 
 export type BinaryOperator =
-  | "==" | "!=" | "<" | "<=" | ">" | ">="
-  | "+" | "-" | "*" | "/" | "%"
-  | "&&" | "||"
+  | "=="
+  | "!="
+  | "<"
+  | "<="
+  | ">"
+  | ">="
+  | "+"
+  | "-"
+  | "*"
+  | "/"
+  | "%"
+  | "&&"
+  | "||"
   | "??"
-  | "in" | "includes";
+  | "in"
+  | "includes";
 
 export type UnaryOperator = "!" | "-" | "+";
 
@@ -292,10 +301,12 @@ export function isRowExpression(expr: Expression): expr is RowExpression {
 }
 
 export function isGroupExpression(expr: Expression): expr is GroupExpression {
-  return expr.type.startsWith("group-") ||
-         expr.type === "aggregate" ||
-         expr.type === "group-key" ||
-         expr.type === "constant";
+  return (
+    expr.type.startsWith("group-") ||
+    expr.type === "aggregate" ||
+    expr.type === "group-key" ||
+    expr.type === "constant"
+  );
 }
 
 export function isConstant(expr: Expression): expr is ConstantExpression {
@@ -317,3 +328,12 @@ export function isAggregate(expr: Expression): expr is AggregateExpression {
 export function isGroupKey(expr: Expression): expr is GroupKeyExpression {
   return expr.type === "group-key";
 }
+
+/**
+ * Type aliases for backward compatibility with tests
+ */
+export type ComparisonExpression = RowBinaryExpression & { type: "comparison" };
+export type ObjectExpression = RowObjectExpression;
+export type LogicalExpression = RowBinaryExpression;
+export type BooleanMethodExpression = RowCallExpression;
+export type ColumnExpression = RowMemberExpression;

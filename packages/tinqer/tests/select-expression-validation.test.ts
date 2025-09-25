@@ -22,40 +22,37 @@ describe("SELECT Expression Validation", () => {
 
   it("should reject comparison expressions in SELECT projections", () => {
     const queryBuilder = () =>
-      from(dbContext, "products")
-        .select((p) => ({
-          id: p.id,
-          name: p.name,
-          hasStock: p.stock > 0, // This should throw an error
-        }));
+      from(dbContext, "products").select((p) => ({
+        id: p.id,
+        name: p.name,
+        hasStock: p.stock > 0, // This should throw an error
+      }));
 
     expect(() => parseQuery(queryBuilder)).to.throw(
-      "Comparison expressions are not supported in SELECT projections"
+      "Comparison expressions are not supported in SELECT projections",
     );
   });
 
   it("should reject logical expressions in SELECT projections", () => {
     const queryBuilder = () =>
-      from(dbContext, "products")
-        .select((p) => ({
-          id: p.id,
-          name: p.name,
-          featured: p.is_featured && p.stock > 0, // This should throw an error
-        }));
+      from(dbContext, "products").select((p) => ({
+        id: p.id,
+        name: p.name,
+        featured: p.is_featured && p.stock > 0, // This should throw an error
+      }));
 
     expect(() => parseQuery(queryBuilder)).to.throw(
-      "Logical expressions are not supported in SELECT projections"
+      "Logical expressions are not supported in SELECT projections",
     );
   });
 
   it("should allow simple column references in SELECT", () => {
     const queryBuilder = () =>
-      from(dbContext, "products")
-        .select((p) => ({
-          id: p.id,
-          name: p.name,
-          stock: p.stock,
-        }));
+      from(dbContext, "products").select((p) => ({
+        id: p.id,
+        name: p.name,
+        stock: p.stock,
+      }));
 
     const result = parseQuery(queryBuilder);
     expect(result).to.exist;
@@ -64,11 +61,10 @@ describe("SELECT Expression Validation", () => {
 
   it("should allow arithmetic expressions in SELECT", () => {
     const queryBuilder = () =>
-      from(dbContext, "products")
-        .select((p) => ({
-          id: p.id,
-          discountedPrice: p.price * 0.9,
-        }));
+      from(dbContext, "products").select((p) => ({
+        id: p.id,
+        discountedPrice: p.price * 0.9,
+      }));
 
     const result = parseQuery(queryBuilder);
     expect(result).to.exist;
@@ -77,12 +73,11 @@ describe("SELECT Expression Validation", () => {
 
   it("should allow constants in SELECT", () => {
     const queryBuilder = () =>
-      from(dbContext, "products")
-        .select((p) => ({
-          id: p.id,
-          status: "active",
-          defaultStock: 100,
-        }));
+      from(dbContext, "products").select((p) => ({
+        id: p.id,
+        status: "active",
+        defaultStock: 100,
+      }));
 
     const result = parseQuery(queryBuilder);
     expect(result).to.exist;
@@ -101,12 +96,11 @@ describe("SELECT Expression Validation", () => {
     const dbContextWithNullable = createContext<NullableProductsSchema>();
 
     const queryBuilder = () =>
-      from(dbContextWithNullable, "products")
-        .select((p) => ({
-          id: p.id,
-          name: p.name ?? "Unknown",
-          desc: p.description ?? "No description",
-        }));
+      from(dbContextWithNullable, "products").select((p) => ({
+        id: p.id,
+        name: p.name ?? "Unknown",
+        desc: p.description ?? "No description",
+      }));
 
     const result = parseQuery(queryBuilder);
     expect(result).to.exist;

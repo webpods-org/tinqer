@@ -2,11 +2,7 @@
  * PostgreSQL SQL generator for Tinqer using pg-promise format
  */
 
-import {
-  type Queryable,
-  type OrderedQueryable,
-  type TerminalQuery,
-} from "@webpods/tinqer";
+import { type Queryable, type OrderedQueryable, type TerminalQuery } from "@webpods/tinqer";
 import type { SqlResult } from "./types.js";
 
 /**

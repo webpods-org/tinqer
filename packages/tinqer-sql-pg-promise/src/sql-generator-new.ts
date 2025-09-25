@@ -37,25 +37,25 @@ export function generateSql(operation: QueryOperation, _params?: Record<string, 
 function generateOperation(
   operation: QueryOperation,
   context: SqlGeneratorContext,
-  _params?: Record<string, unknown>
+  _params?: Record<string, unknown>,
 ): string {
   // Collect all operations in chain
   const operations = collectOperations(operation);
 
   // Determine if we have GROUP BY
-  const hasGroupBy = operations.some(op => op.type === "groupBy");
+  const hasGroupBy = operations.some((op) => op.type === "groupBy");
 
   // Build SQL clauses
   const clauses: string[] = [];
 
   // Find the source table
-  const tableOp = operations.find(op => op.type === "table") as TableOperation | undefined;
+  const tableOp = operations.find((op) => op.type === "table") as TableOperation | undefined;
   if (!tableOp) {
     throw new Error("No source table found");
   }
 
   // SELECT clause
-  const selectOp = operations.find(op => op.type === "select") as SelectOperation | undefined;
+  const selectOp = operations.find((op) => op.type === "select") as SelectOperation | undefined;
   if (selectOp && selectOp.expression) {
     const selectSql = generateExpression(selectOp.expression, {
       ...context,
@@ -71,7 +71,7 @@ function generateOperation(
   clauses.push(`FROM "${tableOp.table}"`);
 
   // JOIN clauses
-  const joinOps = operations.filter(op => op.type === "join") as JoinOperation[];
+  const joinOps = operations.filter((op) => op.type === "join") as JoinOperation[];
   for (const joinOp of joinOps) {
     if (joinOp.outerKeyExpression && joinOp.innerKeyExpression) {
       const innerTable = getSourceTable(joinOp.inner);
@@ -88,22 +88,27 @@ function generateOperation(
   }
 
   // WHERE clause (before GROUP BY)
-  const whereOps = operations.filter(op => op.type === "where") as WhereOperation[];
-  const preGroupWhereOps = hasGroupBy ? whereOps.slice(0, whereOps.findIndex(w =>
-    operations.indexOf(w) > operations.findIndex(op => op.type === "groupBy")
-  )) : whereOps;
+  const whereOps = operations.filter((op) => op.type === "where") as WhereOperation[];
+  const preGroupWhereOps = hasGroupBy
+    ? whereOps.slice(
+        0,
+        whereOps.findIndex(
+          (w) => operations.indexOf(w) > operations.findIndex((op) => op.type === "groupBy"),
+        ),
+      )
+    : whereOps;
 
   if (preGroupWhereOps.length > 0) {
     const conditions = preGroupWhereOps
-      .filter(w => w.expression)
-      .map(w => generateExpression(w.expression!, context));
+      .filter((w) => w.expression)
+      .map((w) => generateExpression(w.expression!, context));
     if (conditions.length > 0) {
       clauses.push(`WHERE ${conditions.join(" AND ")}`);
     }
   }
 
   // GROUP BY clause
-  const groupByOp = operations.find(op => op.type === "groupBy") as GroupByOperation | undefined;
+  const groupByOp = operations.find((op) => op.type === "groupBy") as GroupByOperation | undefined;
   if (groupByOp && groupByOp.keyExpression) {
     const groupKey = generateExpression(groupByOp.keyExpression, context);
     clauses.push(`GROUP BY ${groupKey}`);
@@ -112,17 +117,21 @@ function generateOperation(
 
   // HAVING clause (after GROUP BY)
   if (hasGroupBy) {
-    const postGroupWhereOps = whereOps.slice(whereOps.findIndex(w =>
-      operations.indexOf(w) > operations.findIndex(op => op.type === "groupBy")
-    ) + 1);
+    const postGroupWhereOps = whereOps.slice(
+      whereOps.findIndex(
+        (w) => operations.indexOf(w) > operations.findIndex((op) => op.type === "groupBy"),
+      ) + 1,
+    );
 
     if (postGroupWhereOps.length > 0) {
       const conditions = postGroupWhereOps
-        .filter(w => w.expression)
-        .map(w => generateExpression(w.expression!, {
-          ...context,
-          isGrouped: true,
-        }));
+        .filter((w) => w.expression)
+        .map((w) =>
+          generateExpression(w.expression!, {
+            ...context,
+            isGrouped: true,
+          }),
+        );
       if (conditions.length > 0) {
         clauses.push(`HAVING ${conditions.join(" AND ")}`);
       }
@@ -130,14 +139,14 @@ function generateOperation(
   }
 
   // ORDER BY clause
-  const orderByOps = operations.filter(op =>
-    op.type === "orderBy" || op.type === "orderByDescending"
+  const orderByOps = operations.filter(
+    (op) => op.type === "orderBy" || op.type === "orderByDescending",
   ) as (OrderByOperation | OrderByDescendingOperation)[];
 
   if (orderByOps.length > 0) {
     const orderClauses = orderByOps
-      .filter(o => o.expression)
-      .map(o => {
+      .filter((o) => o.expression)
+      .map((o) => {
         const expr = generateExpression(o.expression!, context);
         const dir = o.type === "orderByDescending" ? " DESC" : "";
         return `${expr}${dir}`;
@@ -148,21 +157,21 @@ function generateOperation(
   }
 
   // LIMIT clause
-  const takeOp = operations.find(op => op.type === "take") as TakeOperation | undefined;
+  const takeOp = operations.find((op) => op.type === "take") as TakeOperation | undefined;
   if (takeOp) {
     clauses.push(`LIMIT ${takeOp.count}`);
   }
 
   // OFFSET clause
-  const skipOp = operations.find(op => op.type === "skip") as SkipOperation | undefined;
+  const skipOp = operations.find((op) => op.type === "skip") as SkipOperation | undefined;
   if (skipOp) {
     clauses.push(`OFFSET ${skipOp.count}`);
   }
 
   // DISTINCT modifier
-  const distinctOp = operations.find(op => op.type === "distinct");
+  const distinctOp = operations.find((op) => op.type === "distinct");
   if (distinctOp) {
-    const selectIndex = clauses.findIndex(c => c.startsWith("SELECT"));
+    const selectIndex = clauses.findIndex((c) => c.startsWith("SELECT"));
     if (selectIndex >= 0 && clauses[selectIndex]) {
       clauses[selectIndex] = clauses[selectIndex].replace("SELECT", "SELECT DISTINCT");
     }
@@ -182,9 +191,9 @@ function collectOperations(operation: QueryOperation): QueryOperation[] {
     operations.unshift(current);
 
     // Get the source operation
-    if ('source' in current && current.source) {
+    if ("source" in current && current.source) {
       current = current.source as QueryOperation;
-    } else if (current.type === 'join' && 'outer' in current) {
+    } else if (current.type === "join" && "outer" in current) {
       current = (current as JoinOperation).outer;
     } else {
       current = undefined;
@@ -201,7 +210,7 @@ function getSourceTable(operation: QueryOperation): string {
   if (operation.type === "table") {
     return (operation as TableOperation).table;
   }
-  if ('source' in operation && operation.source) {
+  if ("source" in operation && operation.source) {
     return getSourceTable(operation.source as QueryOperation);
   }
   return "unknown";

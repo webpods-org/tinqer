@@ -18,7 +18,7 @@ export interface ParameterRegistry {
 export function createRegistry(): ParameterRegistry {
   return {
     parameters: [],
-    counter: 0,
+    counter: 1, // Start at 1 for __p1, __p2, etc.
   };
 }
 
@@ -27,7 +27,7 @@ export function createRegistry(): ParameterRegistry {
  */
 export function addParameter(
   registry: ParameterRegistry,
-  value: unknown
+  value: unknown,
 ): [ParameterRegistry, string] {
   const paramName = `__p${registry.counter}`;
   const newRegistry: ParameterRegistry = {
@@ -53,7 +53,7 @@ export function getParametersObject(registry: ParameterRegistry): Record<string,
  */
 export function mergeRegistries(
   first: ParameterRegistry,
-  second: ParameterRegistry
+  second: ParameterRegistry,
 ): ParameterRegistry {
   // Renumber second registry's parameters to avoid conflicts
   const offset = first.counter;

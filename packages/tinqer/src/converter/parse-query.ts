@@ -15,7 +15,11 @@ export function parseQuery(lambda: string): any {
   }
 
   // The AST should have a body with a single statement (expression statement)
-  if ((ast as any).body && (ast as any).body.length === 1 && (ast as any).body[0].type === "ExpressionStatement") {
+  if (
+    (ast as any).body &&
+    (ast as any).body.length === 1 &&
+    (ast as any).body[0].type === "ExpressionStatement"
+  ) {
     return (ast as any).body[0].expression;
   }
 

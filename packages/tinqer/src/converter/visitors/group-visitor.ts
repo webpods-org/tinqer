@@ -40,10 +40,7 @@ export type GroupVisitorResult = [GroupExpression, ParameterRegistry];
 /**
  * Visit an identifier node in group context
  */
-export function visitIdentifier(
-  node: any,
-  context: GroupVisitorContext
-): GroupVisitorResult {
+export function visitIdentifier(node: any, context: GroupVisitorContext): GroupVisitorResult {
   const name = node.name;
 
   // Check if it's a lambda parameter (now represents a group)
@@ -71,16 +68,15 @@ export function visitIdentifier(
 /**
  * Visit a member expression in group context
  */
-export function visitMemberExpression(
-  node: any,
-  context: GroupVisitorContext
-): GroupVisitorResult {
+export function visitMemberExpression(node: any, context: GroupVisitorContext): GroupVisitorResult {
   // Check if this is accessing a group key
   if (node.object.type === "Identifier" && context.lambdaParams.has(node.object.name)) {
     const property = node.computed
       ? node.property.type === "StringLiteral"
         ? node.property.value
-        : (() => { throw new Error("Computed properties must be string literals"); })()
+        : (() => {
+            throw new Error("Computed properties must be string literals");
+          })()
       : node.property.name;
 
     // Special case: accessing .Key on a group parameter
@@ -121,7 +117,9 @@ export function visitMemberExpression(
   const property = node.computed
     ? node.property.type === "StringLiteral"
       ? node.property.value
-      : (() => { throw new Error("Computed properties must be string literals"); })()
+      : (() => {
+          throw new Error("Computed properties must be string literals");
+        })()
     : node.property.name;
 
   const member: GroupMemberExpression = {
@@ -137,10 +135,7 @@ export function visitMemberExpression(
 /**
  * Visit a call expression in group context
  */
-export function visitCallExpression(
-  node: any,
-  context: GroupVisitorContext
-): GroupVisitorResult {
+export function visitCallExpression(node: any, context: GroupVisitorContext): GroupVisitorResult {
   // Check if it's a method call on a group
   if (node.callee.type === "MemberExpression") {
     const methodName = node.callee.property.name;
@@ -218,7 +213,7 @@ export function visitCallExpression(
 function visitAggregateFunction(
   node: any,
   functionName: string,
-  context: GroupVisitorContext
+  context: GroupVisitorContext,
 ): GroupVisitorResult {
   const aggregateFn = functionName.toLowerCase() as AggregateExpression["function"];
 
@@ -271,10 +266,7 @@ function isAggregateFunction(name: string): boolean {
 /**
  * Visit a binary expression in group context
  */
-export function visitBinaryExpression(
-  node: any,
-  context: GroupVisitorContext
-): GroupVisitorResult {
+export function visitBinaryExpression(node: any, context: GroupVisitorContext): GroupVisitorResult {
   // Handle nullish coalescing
   if (node.operator === "??") {
     const [left, reg1] = visitNode(node.left, context);
@@ -317,10 +309,7 @@ export function visitBinaryExpression(
 /**
  * Visit a unary expression in group context
  */
-export function visitUnaryExpression(
-  node: any,
-  context: GroupVisitorContext
-): GroupVisitorResult {
+export function visitUnaryExpression(node: any, context: GroupVisitorContext): GroupVisitorResult {
   const [argument, registry] = visitNode(node.argument, context);
 
   const unary: GroupUnaryExpression = {
@@ -337,7 +326,7 @@ export function visitUnaryExpression(
  */
 export function visitConditionalExpression(
   node: any,
-  context: GroupVisitorContext
+  context: GroupVisitorContext,
 ): GroupVisitorResult {
   const [test, reg1] = visitNode(node.test, context);
   const [consequent, reg2] = visitNode(node.consequent, { ...context, registry: reg1 });
@@ -356,10 +345,7 @@ export function visitConditionalExpression(
 /**
  * Visit an array expression in group context
  */
-export function visitArrayExpression(
-  node: any,
-  context: GroupVisitorContext
-): GroupVisitorResult {
+export function visitArrayExpression(node: any, context: GroupVisitorContext): GroupVisitorResult {
   const elements: GroupExpression[] = [];
   let currentReg = context.registry;
 
@@ -388,10 +374,7 @@ export function visitArrayExpression(
 /**
  * Visit an object expression in group context
  */
-export function visitObjectExpression(
-  node: any,
-  context: GroupVisitorContext
-): GroupVisitorResult {
+export function visitObjectExpression(node: any, context: GroupVisitorContext): GroupVisitorResult {
   const properties: Array<{ key: string; value: GroupExpression }> = [];
   let currentReg = context.registry;
 
@@ -400,11 +383,14 @@ export function visitObjectExpression(
       throw new Error("Spread properties not supported in objects");
     }
 
-    const key = prop.key.type === "Identifier"
-      ? prop.key.name
-      : prop.key.type === "StringLiteral"
-      ? prop.key.value
-      : (() => { throw new Error("Object keys must be identifiers or string literals"); })();
+    const key =
+      prop.key.type === "Identifier"
+        ? prop.key.name
+        : prop.key.type === "StringLiteral"
+          ? prop.key.value
+          : (() => {
+              throw new Error("Object keys must be identifiers or string literals");
+            })();
 
     const [value, newReg] = visitNode(prop.value, { ...context, registry: currentReg });
     properties.push({ key, value });
@@ -422,13 +408,13 @@ export function visitObjectExpression(
 /**
  * Visit a literal node in group context
  */
-export function visitLiteral(
-  node: any,
-  context: GroupVisitorContext
-): GroupVisitorResult {
+export function visitLiteral(node: any, context: GroupVisitorContext): GroupVisitorResult {
   let value: unknown;
 
-  if (node.type === "BooleanLiteral") {
+  if (node.type === "Literal") {
+    // OXC parser uses Literal for all primitive values
+    value = node.value;
+  } else if (node.type === "BooleanLiteral") {
     value = node.value;
   } else if (node.type === "NullLiteral") {
     value = null;
@@ -453,10 +439,7 @@ export function visitLiteral(
 /**
  * Main visitor dispatcher for group context
  */
-export function visitNode(
-  node: any,
-  context: GroupVisitorContext
-): GroupVisitorResult {
+export function visitNode(node: any, context: GroupVisitorContext): GroupVisitorResult {
   switch (node.type) {
     case "Identifier":
       return visitIdentifier(node, context);
@@ -483,6 +466,7 @@ export function visitNode(
     case "ObjectExpression":
       return visitObjectExpression(node, context);
 
+    case "Literal": // OXC parser uses Literal for all primitives
     case "BooleanLiteral":
     case "NullLiteral":
     case "NumericLiteral":
@@ -502,10 +486,7 @@ export function visitNode(
 /**
  * Visit an arrow function in group context (for subqueries)
  */
-function visitArrowFunction(
-  _node: any,
-  _context: GroupVisitorContext
-): GroupVisitorResult {
+function visitArrowFunction(_node: any, _context: GroupVisitorContext): GroupVisitorResult {
   // This would be used for subqueries - implement when needed
   throw new Error("Nested arrow functions (subqueries) not yet implemented");
 }
@@ -531,7 +512,7 @@ function mapBinaryOperator(op: string): BinaryOperator {
     "&&": "&&",
     "||": "||",
     "??": "??",
-    "in": "in",
+    in: "in",
   };
 
   const mapped = mapping[op];

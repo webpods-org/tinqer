@@ -8,7 +8,7 @@ import { visitNode as visitRowNode } from "../visitors/row-visitor.js";
 
 export function convertJoin(
   bodyNode: any,
-  context: ConversionContext
+  context: ConversionContext,
 ): ConversionResult<RowExpression> {
   // JOIN key selectors always operate on rows
   const [expression, registry] = visitRowNode(bodyNode, {

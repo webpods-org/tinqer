@@ -33,11 +33,7 @@ import type {
   GroupInExpression,
 } from "@webpods/tinqer";
 
-import {
-  isRowExpression,
-  isGroupExpression,
-  isConstant,
-} from "@webpods/tinqer";
+import { isRowExpression, isGroupExpression, isConstant } from "@webpods/tinqer";
 
 export interface SqlGeneratorContext {
   paramPrefix: string;
@@ -48,10 +44,7 @@ export interface SqlGeneratorContext {
 /**
  * Generate SQL for any expression
  */
-export function generateExpression(
-  expr: Expression,
-  context: SqlGeneratorContext
-): string {
+export function generateExpression(expr: Expression, context: SqlGeneratorContext): string {
   if (isConstant(expr)) {
     return generateConstant(expr);
   }
@@ -96,10 +89,7 @@ function generateConstant(expr: ConstantExpression): string {
 /**
  * Generate SQL for row-level expressions
  */
-function generateRowExpression(
-  expr: RowExpression,
-  context: SqlGeneratorContext
-): string {
+function generateRowExpression(expr: RowExpression, context: SqlGeneratorContext): string {
   switch (expr.type) {
     case "constant":
       return generateConstant(expr);
@@ -145,22 +135,23 @@ function generateRowExpression(
 
     case "row-call": {
       const call = expr as RowCallExpression;
-      return generateFunctionCall(call.function, call.arguments.map(arg =>
-        generateRowExpression(arg, context)
-      ));
+      return generateFunctionCall(
+        call.function,
+        call.arguments.map((arg) => generateRowExpression(arg, context)),
+      );
     }
 
     case "row-array": {
       const array = expr as RowArrayExpression;
-      const elements = array.elements.map(el => generateRowExpression(el, context));
+      const elements = array.elements.map((el) => generateRowExpression(el, context));
       return `ARRAY[${elements.join(", ")}]`;
     }
 
     case "row-object": {
       const obj = expr as RowObjectExpression;
       // Generate as a row constructor or JSON
-      const props = obj.properties.map(({ key, value }) =>
-        `'${key}', ${generateRowExpression(value, context)}`
+      const props = obj.properties.map(
+        ({ key, value }) => `'${key}', ${generateRowExpression(value, context)}`,
       );
       return `json_build_object(${props.join(", ")})`;
     }
@@ -174,7 +165,7 @@ function generateRowExpression(
 
     case "row-coalesce": {
       const coalesce = expr as RowCoalesceExpression;
-      const args = coalesce.expressions.map(e => generateRowExpression(e, context));
+      const args = coalesce.expressions.map((e) => generateRowExpression(e, context));
       return `COALESCE(${args.join(", ")})`;
     }
 
@@ -182,7 +173,7 @@ function generateRowExpression(
       const inExpr = expr as RowInExpression;
       const value = generateRowExpression(inExpr.value, context);
       if (Array.isArray(inExpr.list)) {
-        const list = inExpr.list.map(item => generateRowExpression(item, context));
+        const list = inExpr.list.map((item) => generateRowExpression(item, context));
         return `${value} IN (${list.join(", ")})`;
       } else {
         const listSql = generateRowExpression(inExpr.list, context);
@@ -198,10 +189,7 @@ function generateRowExpression(
 /**
  * Generate SQL for group-level expressions
  */
-function generateGroupExpression(
-  expr: GroupExpression,
-  context: SqlGeneratorContext
-): string {
+function generateGroupExpression(expr: GroupExpression, context: SqlGeneratorContext): string {
   switch (expr.type) {
     case "constant":
       return generateConstant(expr);
@@ -260,21 +248,22 @@ function generateGroupExpression(
 
     case "group-call": {
       const call = expr as GroupCallExpression;
-      return generateFunctionCall(call.function, call.arguments.map(arg =>
-        generateGroupExpression(arg, context)
-      ));
+      return generateFunctionCall(
+        call.function,
+        call.arguments.map((arg) => generateGroupExpression(arg, context)),
+      );
     }
 
     case "group-array": {
       const array = expr as GroupArrayExpression;
-      const elements = array.elements.map(el => generateGroupExpression(el, context));
+      const elements = array.elements.map((el) => generateGroupExpression(el, context));
       return `ARRAY[${elements.join(", ")}]`;
     }
 
     case "group-object": {
       const obj = expr as GroupObjectExpression;
-      const props = obj.properties.map(({ key, value }) =>
-        `'${key}', ${generateGroupExpression(value, context)}`
+      const props = obj.properties.map(
+        ({ key, value }) => `'${key}', ${generateGroupExpression(value, context)}`,
       );
       return `json_build_object(${props.join(", ")})`;
     }
@@ -288,7 +277,7 @@ function generateGroupExpression(
 
     case "group-coalesce": {
       const coalesce = expr as GroupCoalesceExpression;
-      const args = coalesce.expressions.map(e => generateGroupExpression(e, context));
+      const args = coalesce.expressions.map((e) => generateGroupExpression(e, context));
       return `COALESCE(${args.join(", ")})`;
     }
 
@@ -296,7 +285,7 @@ function generateGroupExpression(
       const inExpr = expr as GroupInExpression;
       const value = generateGroupExpression(inExpr.value, context);
       if (Array.isArray(inExpr.list)) {
-        const list = inExpr.list.map(item => generateGroupExpression(item, context));
+        const list = inExpr.list.map((item) => generateGroupExpression(item, context));
         return `${value} IN (${list.join(", ")})`;
       } else {
         const listSql = generateGroupExpression(inExpr.list, context);
@@ -312,10 +301,7 @@ function generateGroupExpression(
 /**
  * Generate SQL for aggregate functions
  */
-function generateAggregate(
-  agg: AggregateExpression,
-  context: SqlGeneratorContext
-): string {
+function generateAggregate(agg: AggregateExpression, context: SqlGeneratorContext): string {
   const fnName = agg.function.toUpperCase();
 
   if (!agg.expression) {
